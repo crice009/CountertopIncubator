@@ -33,7 +33,7 @@ html {
 .menu li:hover {
     background-color: rgb(40, 40, 40);
 }
-.menu a {
+.menu a:link {
     text-decoration: none;
 }
 .aside {
