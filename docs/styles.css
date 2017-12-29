@@ -22,6 +22,7 @@ html {
     list-style-type: none;
     margin: 0;
     padding: 0;
+    text-decoration: none;
 }
 .menu li {
     padding: 8px;
