@@ -51,6 +51,9 @@ html {
     font-size: 12px;
     padding: 15px;
 }
+.floating-block {
+    display: inline-block;
+}
 /* For mobile phones: */
 [class*="col-"] {
     width: 100%;
