@@ -22,7 +22,6 @@ html {
     list-style-type: none;
     margin: 0;
     padding: 0;
-    text-decoration: none;
 }
 .menu li {
     padding: 8px;
@@ -33,6 +32,9 @@ html {
 }
 .menu li:hover {
     background-color: rgb(40, 40, 40);
+}
+.menu a {
+    text-decoration: none;
 }
 .aside {
     background-color: black;
