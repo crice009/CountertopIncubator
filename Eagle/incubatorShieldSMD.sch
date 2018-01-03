@@ -1675,6 +1675,7 @@ several days. Intended for tempeh...</text>
 <wire x1="5.08" y1="-5.08" x2="5.08" y2="-43.18" width="0.1524" layer="95"/>
 <wire x1="5.08" y1="-43.18" x2="210.82" y2="-43.18" width="0.1524" layer="95"/>
 <wire x1="210.82" y1="-43.18" x2="210.82" y2="-5.08" width="0.1524" layer="95"/>
+<text x="137.16" y="-20.32" size="3.81" layer="95">Spare Thermistor Pins</text>
 </plain>
 <instances>
 <instance part="R1" gate="G$1" x="60.96" y="53.34" rot="R90"/>
@@ -1714,15 +1715,15 @@ several days. Intended for tempeh...</text>
 <instance part="C1" gate="G$1" x="50.8" y="106.68" rot="R90"/>
 <instance part="C2" gate="G$1" x="114.3" y="142.24" rot="R270"/>
 <instance part="R6" gate="G$1" x="116.84" y="71.12"/>
-<instance part="R7" gate="G$1" x="86.36" y="-22.86"/>
-<instance part="P+7" gate="1" x="101.6" y="-22.86" rot="R270"/>
-<instance part="GND13" gate="1" x="40.64" y="-35.56"/>
+<instance part="R7" gate="G$1" x="63.5" y="-25.4"/>
+<instance part="P+7" gate="1" x="78.74" y="-25.4" rot="R270"/>
+<instance part="GND13" gate="1" x="17.78" y="-38.1"/>
 <instance part="S1" gate="G$1" x="116.84" y="116.84" rot="R180"/>
-<instance part="JP1" gate="A" x="58.42" y="-25.4"/>
-<instance part="R8" gate="G$1" x="116.84" y="-25.4"/>
-<instance part="P+8" gate="1" x="134.62" y="-25.4" rot="R270"/>
-<instance part="R9" gate="G$1" x="152.4" y="-27.94"/>
-<instance part="P+9" gate="1" x="170.18" y="-27.94" rot="R270"/>
+<instance part="JP1" gate="A" x="35.56" y="-27.94"/>
+<instance part="R8" gate="G$1" x="93.98" y="-27.94"/>
+<instance part="P+8" gate="1" x="111.76" y="-27.94" rot="R270"/>
+<instance part="R9" gate="G$1" x="129.54" y="-30.48"/>
+<instance part="P+9" gate="1" x="147.32" y="-30.48" rot="R270"/>
 </instances>
 <busses>
 </busses>
@@ -1851,17 +1852,17 @@ several days. Intended for tempeh...</text>
 <segment>
 <pinref part="R7" gate="G$1" pin="2"/>
 <pinref part="P+7" gate="1" pin="+5V"/>
-<wire x1="91.44" y1="-22.86" x2="99.06" y2="-22.86" width="0.1524" layer="91"/>
+<wire x1="68.58" y1="-25.4" x2="76.2" y2="-25.4" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="R8" gate="G$1" pin="2"/>
 <pinref part="P+8" gate="1" pin="+5V"/>
-<wire x1="121.92" y1="-25.4" x2="132.08" y2="-25.4" width="0.1524" layer="91"/>
+<wire x1="99.06" y1="-27.94" x2="109.22" y2="-27.94" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="R9" gate="G$1" pin="2"/>
 <pinref part="P+9" gate="1" pin="+5V"/>
-<wire x1="157.48" y1="-27.94" x2="167.64" y2="-27.94" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="-30.48" x2="144.78" y2="-30.48" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="B2" class="0">
@@ -2058,17 +2059,17 @@ several days. Intended for tempeh...</text>
 </segment>
 <segment>
 <pinref part="GND13" gate="1" pin="GNDA"/>
-<wire x1="40.64" y1="-33.02" x2="40.64" y2="-27.94" width="0.1524" layer="91"/>
+<wire x1="17.78" y1="-35.56" x2="17.78" y2="-30.48" width="0.1524" layer="91"/>
 <pinref part="JP1" gate="A" pin="1"/>
-<wire x1="40.64" y1="-27.94" x2="40.64" y2="-25.4" width="0.1524" layer="91"/>
-<wire x1="40.64" y1="-25.4" x2="40.64" y2="-22.86" width="0.1524" layer="91"/>
-<wire x1="40.64" y1="-22.86" x2="55.88" y2="-22.86" width="0.1524" layer="91"/>
+<wire x1="17.78" y1="-30.48" x2="17.78" y2="-27.94" width="0.1524" layer="91"/>
+<wire x1="17.78" y1="-27.94" x2="17.78" y2="-25.4" width="0.1524" layer="91"/>
+<wire x1="17.78" y1="-25.4" x2="33.02" y2="-25.4" width="0.1524" layer="91"/>
 <pinref part="JP1" gate="A" pin="3"/>
-<wire x1="55.88" y1="-25.4" x2="40.64" y2="-25.4" width="0.1524" layer="91"/>
-<junction x="40.64" y="-25.4"/>
+<wire x1="33.02" y1="-27.94" x2="17.78" y2="-27.94" width="0.1524" layer="91"/>
+<junction x="17.78" y="-27.94"/>
 <pinref part="JP1" gate="A" pin="5"/>
-<wire x1="55.88" y1="-27.94" x2="40.64" y2="-27.94" width="0.1524" layer="91"/>
-<junction x="40.64" y="-27.94"/>
+<wire x1="33.02" y1="-30.48" x2="17.78" y2="-30.48" width="0.1524" layer="91"/>
+<junction x="17.78" y="-30.48"/>
 </segment>
 </net>
 <net name="N$2" class="0">
@@ -2081,9 +2082,9 @@ several days. Intended for tempeh...</text>
 <net name="PTEMP2" class="0">
 <segment>
 <pinref part="R8" gate="G$1" pin="1"/>
-<wire x1="111.76" y1="-25.4" x2="63.5" y2="-25.4" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="-27.94" x2="40.64" y2="-27.94" width="0.1524" layer="91"/>
 <pinref part="JP1" gate="A" pin="4"/>
-<label x="106.68" y="-25.4" size="1.778" layer="95" rot="R90" xref="yes"/>
+<label x="83.82" y="-27.94" size="1.778" layer="95" rot="R90" xref="yes"/>
 </segment>
 <segment>
 <pinref part="U$2" gate="G$1" pin="A2"/>
@@ -2098,10 +2099,10 @@ several days. Intended for tempeh...</text>
 <label x="119.38" y="101.6" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 <segment>
-<wire x1="63.5" y1="-22.86" x2="81.28" y2="-22.86" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="-25.4" x2="58.42" y2="-25.4" width="0.1524" layer="91"/>
 <pinref part="R7" gate="G$1" pin="1"/>
 <pinref part="JP1" gate="A" pin="2"/>
-<label x="76.2" y="-22.86" size="1.778" layer="95" rot="R90" xref="yes"/>
+<label x="53.34" y="-25.4" size="1.778" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 <net name="N$5" class="0">
@@ -2120,8 +2121,8 @@ several days. Intended for tempeh...</text>
 <segment>
 <pinref part="JP1" gate="A" pin="6"/>
 <pinref part="R9" gate="G$1" pin="1"/>
-<wire x1="63.5" y1="-27.94" x2="147.32" y2="-27.94" width="0.1524" layer="91"/>
-<label x="139.7" y="-27.94" size="1.778" layer="95" rot="R90" xref="yes"/>
+<wire x1="40.64" y1="-30.48" x2="124.46" y2="-30.48" width="0.1524" layer="91"/>
+<label x="116.84" y="-30.48" size="1.778" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 </nets>

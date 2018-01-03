@@ -1561,13 +1561,13 @@ has a 7.4v switching gate</text>
 <text x="101.6" y="78.74" size="3.81" layer="104">OLED Display (sSPI)</text>
 <text x="22.86" y="68.58" size="3.81" layer="104">Heated Bed Logic Shifter
 (noninverting/ norm-off)</text>
-<text x="119.38" y="160.02" size="6.4516" layer="95">Arduino Shield</text>
 <text x="17.78" y="165.1" size="6.4516" layer="95">Incubator Shield</text>
 <text x="25.4" y="142.24" size="2.54" layer="95">This circuit connects an Arduino
 to the components of a desktop
 incubator that can sustain a
 temperature of 100F safely for
 several days. Intended for tempeh...</text>
+<text x="119.38" y="160.02" size="5.08" layer="95">Arduino Connections</text>
 </plain>
 <instances>
 <instance part="R1" gate="G$1" x="60.96" y="53.34" rot="R90"/>

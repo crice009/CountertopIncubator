@@ -1532,8 +1532,8 @@ http://www.element14.com/community/community/knode/cadsoft_eagle</description>
 <sheet>
 <description>In/Out Circuits of the Incubator shield</description>
 <plain>
-<text x="66.04" y="38.1" size="1.778" layer="91">Heater is a MOSFET that
-has a 7.4v switching gate</text>
+<text x="63.5" y="38.1" size="1.778" layer="95">Heater is print bed MOSFET
+with a 7.4Vth switching gate</text>
 <wire x1="96.52" y1="86.36" x2="96.52" y2="43.18" width="0.1524" layer="153"/>
 <wire x1="96.52" y1="43.18" x2="96.52" y2="-5.08" width="0.1524" layer="153"/>
 <wire x1="96.52" y1="-5.08" x2="154.94" y2="-5.08" width="0.1524" layer="153"/>
