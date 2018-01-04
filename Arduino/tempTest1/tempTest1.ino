@@ -10,6 +10,7 @@
 //#define PROBES 0  // this is the number of temp probes that are used in addition to the heated bed's integrated thermistor (from the line above)
 
 #define HEATER_BED_PIN 6   //this defines the Arduino pin that controls the heater
+#define heater_id 1
 #define TEMP_SENSOR_BED A0 //this defines the ARduino pin that is the bed's temp sensor
 
 //==========================================================================================================
