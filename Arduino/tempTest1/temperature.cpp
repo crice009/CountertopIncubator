@@ -708,8 +708,6 @@ static float analog2tempBed(int raw) {
     if (i == BEDTEMPTABLE_LEN) celsius = PGM_RD_W(BEDTEMPTABLE[i-1][1]);
 
     return celsius;
-  #elif defined BED_USES_AD595
-    return ((raw * ((5.0 * 100.0) / 1024.0) / OVERSAMPLENR) * TEMP_SENSOR_AD595_GAIN) + TEMP_SENSOR_AD595_OFFSET;
   #else
     return 0;
   #endif
@@ -737,7 +735,6 @@ static void updateTemperaturesFromRawValues()
 
 
 void tp_init(){
-  
   // Finish init of mult PROBE arrays 
   for(int e = 0; e < PROBES; e++) {
     // populate with the first value 
@@ -774,7 +771,7 @@ void tp_init(){
     #endif
   #endif  
 
-  // Set analog inputs
+  // Set analog inputs  //this uses a strange implimentation of bit-shifts (not common in Arduino --> possibly change)
   ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
   DIDR0 = 0;
   #ifdef DIDR2
@@ -963,14 +960,7 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
         while(1)
         {
           disable_heater();
-          disable_x();
-          disable_y();
-          disable_z();
-          disable_e0();
-          disable_e1();
-          disable_e2();
           manage_heater();
-          lcd_update(); //commented out by Josh 8/19/2015
         }
       }
       break;
@@ -980,20 +970,18 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
 
 void disable_heater()
 {
-  for(int i=0;i<PROBES
-;i++)
+  for(int i=0;i<PROBES;i++)
     setTargetHotend(0,i);
-  setTargetBed(0);
-  #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
-  target_temperature[0]=0;
-  soft_pwm[0]=0;
-   #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1  
-     WRITE(HEATER_0_PIN,LOW);
-   #endif
+    setTargetBed(0);
+    #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
+    target_temperature[0]=0;
+    soft_pwm[0]=0;
+    #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1  
+      WRITE(HEATER_0_PIN,LOW);
+    #endif
   #endif
      
-  #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1 && PROBES
- > 1
+  #if defined(TEMP_1_PIN) && TEMP_1_PIN > -1 && PROBES > 1
     target_temperature[1]=0;
     soft_pwm[1]=0;
     #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1 
@@ -1001,8 +989,7 @@ void disable_heater()
     #endif
   #endif
       
-  #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1 && PROBES
- > 2
+  #if defined(TEMP_2_PIN) && TEMP_2_PIN > -1 && PROBES > 2
     target_temperature[2]=0;
     soft_pwm[2]=0;
     #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1  
@@ -1059,62 +1046,6 @@ void bed_max_temp_error(void) {
   #endif
 }
 
-#ifdef HEATER_0_USES_MAX6675
-#define MAX6675_HEAT_INTERVAL 250
-long max6675_previous_millis = MAX6675_HEAT_INTERVAL;
-int max6675_temp = 2000;
-
-int read_max6675()
-{
-  if (millis() - max6675_previous_millis < MAX6675_HEAT_INTERVAL) 
-    return max6675_temp;
-  
-  max6675_previous_millis = millis();
-  max6675_temp = 0;
-    
-  #ifdef	PRR
-    PRR &= ~(1<<PRSPI);
-  #elif defined PRR0
-    PRR0 &= ~(1<<PRSPI);
-  #endif
-  
-  SPCR = (1<<MSTR) | (1<<SPE) | (1<<SPR0);
-  
-  // enable TT_MAX6675
-  WRITE(MAX6675_SS, 0);
-  
-  // ensure 100ns delay - a bit extra is fine
-  asm("nop");//50ns on 20Mhz, 62.5ns on 16Mhz
-  asm("nop");//50ns on 20Mhz, 62.5ns on 16Mhz
-  
-  // read MSB
-  SPDR = 0;
-  for (;(SPSR & (1<<SPIF)) == 0;);
-  max6675_temp = SPDR;
-  max6675_temp <<= 8;
-  
-  // read LSB
-  SPDR = 0;
-  for (;(SPSR & (1<<SPIF)) == 0;);
-  max6675_temp |= SPDR;
-  
-  // disable TT_MAX6675
-  WRITE(MAX6675_SS, 1);
-
-  if (max6675_temp & 4) 
-  {
-    // thermocouple open
-    max6675_temp = 2000;
-  }
-  else 
-  {
-    max6675_temp = max6675_temp >> 3;
-  }
-
-  return max6675_temp;
-}
-#endif
-
 
 // Timer 0 is shared with millies
 ISR(TIMER0_COMPB_vect)
@@ -1153,10 +1084,6 @@ ISR(TIMER0_COMPB_vect)
   static unsigned char state_heater_b = 0;
   static unsigned char state_timer_heater_b = 0;
 #endif 
-#endif
-  
-#if defined(FILWIDTH_PIN) &&(FILWIDTH_PIN > -1)
-  static unsigned long raw_filwidth_value = 0;  //added for filament width sensor
 #endif
   
 #ifndef SLOW_PWM_HEATERS
@@ -1237,7 +1164,7 @@ ISR(TIMER0_COMPB_vect)
 #endif
       }
     } else {
-      // turn OFF heather only if the minimum time is up 
+      // turn OFF heater only if the minimum time is up 
       if (state_timer_heater_0 == 0) {
 	// if change state set timer 
 	if (state_heater_0 == 1) {

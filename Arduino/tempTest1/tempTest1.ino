@@ -1,6 +1,8 @@
 #include "temperature.cpp"
 #include "Configuration.h"
 
+#define BED_USES_THERMISTOR  //this tells the firmware that the bed uses a thermistor...
+
 #define THERMISTORHEATER_0 1  //this defines what type of thermistor is used, and hence the voltage-temp table that is referenced. all in this build are a 100k thermistor with a 4.7k pull-up resistor.
 #define THERMISTORHEATER_1 1
 #define THERMISTORHEATER_2 1
