@@ -8,6 +8,14 @@
 
 #define HEATER_BED_PIN 6
 
+// A Whole bunch of fancy options from Marlin
+//#define TEMP_SENSOR_1_AS_REDUNDANT 1  //I think this is for a back-up temp sensor
+//#define PIDTEMP 1                     //This is for if the 3D printer's extruder's temps are PID controlled
+#define PIDTEMPBED                    //This is for if the 3D printer's bed's temps are PID controlled
+//in case you are wondering at this point, non PID controlled temps are bang-bang controlled (google it)
+//#define FAN_SOFT_PWM 1                //this may be to control the fan speed with a software PWM implimentation
+//#define BABYSTEPPING 1                //this likely has to do with extruder babystepping effecting temp goals... not for us
+
 #define led 13
 // the setup function runs once when you press reset or power the board
 void setup() {

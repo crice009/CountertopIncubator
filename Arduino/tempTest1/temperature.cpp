@@ -36,14 +36,18 @@
 //===========================================================================
 int target_temperature[PROBES] = { 0 };
 int target_temperature_bed = 0;
+
 int current_temperature_raw[PROBES] = { 0 };
 float current_temperature[PROBES] = { 0.0 };
+
 int current_temperature_bed_raw = 0;
 float current_temperature_bed = 0.0;
+
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
   int redundant_temperature_raw = 0;
   float redundant_temperature = 0.0;
 #endif
+
 #ifdef PIDTEMP
   float Kp=DEFAULT_Kp;
   float Ki=(DEFAULT_Ki*PID_dT);
@@ -73,30 +77,20 @@ static volatile bool temp_meas_ready = false;
 
 #ifdef PIDTEMP
   //static cannot be external:
-  static float temp_iState[PROBES
-] = { 0 };
-  static float temp_dState[PROBES
-] = { 0 };
-  static float pTerm[PROBES
-];
-  static float iTerm[PROBES
-];
-  static float dTerm[PROBES
-];
+  static float temp_iState[PROBES] = { 0 };
+  static float temp_dState[PROBES] = { 0 };
+  static float pTerm[PROBES];
+  static float iTerm[PROBES];
+  static float dTerm[PROBES];
   //int output;
-  static float pid_error[PROBES
-];
-  static float temp_iState_min[PROBES
-];
-  static float temp_iState_max[PROBES
-];
-  // static float pid_input[PROBES
-];
-  // static float pid_output[PROBES
-];
-  static bool pid_reset[PROBES
-];
+  static float pid_error[PROBES];
+  static float temp_iState_min[PROBES];
+  static float temp_iState_max[PROBES];
+  // static float pid_input[PROBES];
+  // static float pid_output[PROBES];
+  static bool pid_reset[PROBES];
 #endif //PIDTEMP
+
 #ifdef PIDTEMPBED
   //static cannot be external:
   static float temp_iState_bed = { 0 };
@@ -111,8 +105,7 @@ static volatile bool temp_meas_ready = false;
 #else //PIDTEMPBED
 	static unsigned long  previous_millis_bed_heater;
 #endif //PIDTEMPBED
-  static unsigned char soft_pwm[PROBES
-];
+  static unsigned char soft_pwm[PROBES];
 
 #ifdef FAN_SOFT_PWM
   static unsigned char soft_pwm_fan;
