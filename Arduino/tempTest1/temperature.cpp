@@ -137,7 +137,7 @@ static int minttemp[PROBES] = ARRAY_BY_PROBES( 0, 0, 0 );
 static int maxttemp[PROBES] = ARRAY_BY_PROBES( 16383, 16383, 16383 );
 //static int bed_minttemp_raw = HEATER_BED_RAW_LO_TEMP; /* No bed mintemp error implemented?!? */
 #ifdef BED_MAXTEMP
-static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
+  static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
 #endif
 
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
@@ -337,14 +337,13 @@ void PID_autotune(float temp, int PROBE, int ncycles)
 void updatePID()
 {
 #ifdef PIDTEMP
-  for(int e = 0; e < PROBES
-; e++) { 
+  for(int e = 0; e < PROBES; e++) { 
      temp_iState_max[e] = PID_INTEGRAL_DRIVE_MAX / Ki;  
   }
-#endif
+#endif //PIDTEMP
 #ifdef PIDTEMPBED
   temp_iState_max_bed = PID_INTEGRAL_DRIVE_MAX / bedKi;  
-#endif
+#endif //PIDTEMPBED
 }
   
 int getHeaterPower(int heater) {
@@ -435,11 +434,10 @@ void manage_heater()
 
   updateTemperaturesFromRawValues();
 
-  for(int e = 0; e < PROBES
-; e++) 
+  for(int e = 0; e < PROBES; e++) 
   {
 
-#if defined (THERMAL_RUNAWAY_PROTECTION_PERIOD) && THERMAL_RUNAWAY_PROTECTION_PERIOD > 0
+  #if defined (THERMAL_RUNAWAY_PROTECTION_PERIOD) && THERMAL_RUNAWAY_PROTECTION_PERIOD > 0
     thermal_runaway_protection(&thermal_runaway_state_machine[e], &thermal_runaway_timer[e], current_temperature[e], target_temperature[e], e, THERMAL_RUNAWAY_PROTECTION_PERIOD, THERMAL_RUNAWAY_PROTECTION_HYSTERESIS);
   #endif
 

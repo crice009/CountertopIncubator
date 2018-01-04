@@ -1,20 +1,23 @@
 #include "temperature.cpp"
-#include "temperature.h"
-#include "thermistortables.h"
+#include "Configuration.h"
 
-#define THERMISTORHEATER_0 1
-#define PIDTEMPBED 1
-#define PROBES 0
+#define THERMISTORHEATER_0 1  //this defines what type of thermistor is used, and hence the voltage-temp table that is referenced. all in this build are a 100k thermistor with a 4.7k pull-up resistor.
+#define PROBES 0  // this is the number of temp probes that are used in addition to the heated bed's integrated thermistor (from the line above)
 
-#define HEATER_BED_PIN 6
+#define HEATER_BED_PIN 6   //this defines the Arduino pin that controls the heater
+#define TEMP_SENSOR_BED A0 //this defines the ARduino pin that is the bed's temp sensor
 
-// A Whole bunch of fancy options from Marlin
+//==========================================================================================================
+/* A Whole bunch of fancy options from Marlin (located in temperature.cpp)                                */
+//==========================================================================================================
 //#define TEMP_SENSOR_1_AS_REDUNDANT 1  //I think this is for a back-up temp sensor
 //#define PIDTEMP 1                     //This is for if the 3D printer's extruder's temps are PID controlled
-#define PIDTEMPBED                    //This is for if the 3D printer's bed's temps are PID controlled
+#define PIDTEMPBED 1                   //This is for if the 3D printer's bed's temps are PID controlled
 //in case you are wondering at this point, non PID controlled temps are bang-bang controlled (google it)
 //#define FAN_SOFT_PWM 1                //this may be to control the fan speed with a software PWM implimentation
 //#define BABYSTEPPING 1                //this likely has to do with extruder babystepping effecting temp goals... not for us
+//#define BED_MAXTEMP 75                //this is likely a limit to the very hottest the bed will be allowed to get...
+
 
 #define led 13
 // the setup function runs once when you press reset or power the board
