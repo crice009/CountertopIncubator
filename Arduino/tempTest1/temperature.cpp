@@ -144,12 +144,8 @@ static int maxttemp[PROBES] = ARRAY_BY_PROBES( 16383, 16383, 16383 );
   static void *heater_ttbl_map[2] = {(void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE };
   static uint8_t heater_ttbllen_map[2] = { HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN };
 #else
-  static void *heater_ttbl_map[PROBES
-] = ARRAY_BY_PROBES
-( (void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE, (void *)HEATER_2_TEMPTABLE );
-  static uint8_t heater_ttbllen_map[PROBES
-] = ARRAY_BY_PROBES
-( HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN );
+  static void *heater_ttbl_map[PROBES] = ARRAY_BY_PROBES( (void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE, (void *)HEATER_2_TEMPTABLE );
+  static uint8_t heater_ttbllen_map[PROBES] = ARRAY_BY_PROBES( HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN );
 #endif
 
 static float analog2temp(int raw, uint8_t e);
@@ -157,8 +153,8 @@ static float analog2tempBed(int raw);
 static void updateTemperaturesFromRawValues();
 
 #ifdef WATCH_TEMP_PERIOD
-int watch_start_temp[PROBES] = ARRAY_BY_PROBES(0,0,0);
-unsigned long watchmillis[PROBES] = ARRAY_BY_PROBES(0,0,0);
+  int watch_start_temp[PROBES] = ARRAY_BY_PROBES(0,0,0);
+  unsigned long watchmillis[PROBES] = ARRAY_BY_PROBES(0,0,0);
 #endif //WATCH_TEMP_PERIOD
 
 #ifndef SOFT_PWM_SCALE
@@ -743,8 +739,7 @@ static void updateTemperaturesFromRawValues()
 void tp_init(){
   
   // Finish init of mult PROBE arrays 
-  for(int e = 0; e < PROBES
-; e++) {
+  for(int e = 0; e < PROBES; e++) {
     // populate with the first value 
     maxttemp[e] = maxttemp[0];
 #ifdef PIDTEMP
@@ -778,26 +773,6 @@ void tp_init(){
     soft_pwm_fan = fanSpeedSoftPwm / 2;
     #endif
   #endif  
-
-  #ifdef HEATER_0_USES_MAX6675
-    #ifndef SDSUPPORT
-      SET_OUTPUT(SCK_PIN);
-      WRITE(SCK_PIN,0);
-    
-      SET_OUTPUT(MOSI_PIN);
-      WRITE(MOSI_PIN,1);
-    
-      SET_INPUT(MISO_PIN);
-      WRITE(MISO_PIN,1);
-    #endif
-    /* Using pinMode and digitalWrite, as that was the only way I could get it to compile */
-    
-    //Have to toggle SD card CS pin to low first, to enable firmware to talk with SD card
-	pinMode(SS_PIN, OUTPUT);
-	digitalWrite(SS_PIN,0);  
-	pinMode(MAX6675_SS, OUTPUT);
-	digitalWrite(MAX6675_SS,1);
-  #endif
 
   // Set analog inputs
   ADCSRA = 1<<ADEN | 1<<ADSC | 1<<ADIF | 0x07;
@@ -846,84 +821,84 @@ void tp_init(){
 #ifdef HEATER_0_MINTEMP
   minttemp[0] = HEATER_0_MINTEMP;
   while(analog2temp(minttemp_raw[0], 0) < HEATER_0_MINTEMP) {
-#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-    minttemp_raw[0] += OVERSAMPLENR;
-#else
-    minttemp_raw[0] -= OVERSAMPLENR;
-#endif
+    #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+        minttemp_raw[0] += OVERSAMPLENR;
+    #else
+        minttemp_raw[0] -= OVERSAMPLENR;
+    #endif
   }
 #endif //MINTEMP
 #ifdef HEATER_0_MAXTEMP
   maxttemp[0] = HEATER_0_MAXTEMP;
   while(analog2temp(maxttemp_raw[0], 0) > HEATER_0_MAXTEMP) {
-#if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
-    maxttemp_raw[0] -= OVERSAMPLENR;
-#else
-    maxttemp_raw[0] += OVERSAMPLENR;
-#endif
+    #if HEATER_0_RAW_LO_TEMP < HEATER_0_RAW_HI_TEMP
+        maxttemp_raw[0] -= OVERSAMPLENR;
+    #else
+        maxttemp_raw[0] += OVERSAMPLENR;
+    #endif
   }
 #endif //MAXTEMP
 
 #if (PROBES > 1) && defined(HEATER_1_MINTEMP)
   minttemp[1] = HEATER_1_MINTEMP;
   while(analog2temp(minttemp_raw[1], 1) < HEATER_1_MINTEMP) {
-#if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
-    minttemp_raw[1] += OVERSAMPLENR;
-#else
-    minttemp_raw[1] -= OVERSAMPLENR;
-#endif
+    #if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
+        minttemp_raw[1] += OVERSAMPLENR;
+    #else
+        minttemp_raw[1] -= OVERSAMPLENR;
+    #endif
   }
 #endif // MINTEMP 1
 #if (PROBES > 1) && defined(HEATER_1_MAXTEMP)
   maxttemp[1] = HEATER_1_MAXTEMP;
   while(analog2temp(maxttemp_raw[1], 1) > HEATER_1_MAXTEMP) {
-#if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
-    maxttemp_raw[1] -= OVERSAMPLENR;
-#else
-    maxttemp_raw[1] += OVERSAMPLENR;
-#endif
+    #if HEATER_1_RAW_LO_TEMP < HEATER_1_RAW_HI_TEMP
+        maxttemp_raw[1] -= OVERSAMPLENR;
+    #else
+        maxttemp_raw[1] += OVERSAMPLENR;
+    #endif
   }
 #endif //MAXTEMP 1
 
 #if (PROBES > 2) && defined(HEATER_2_MINTEMP)
   minttemp[2] = HEATER_2_MINTEMP;
   while(analog2temp(minttemp_raw[2], 2) < HEATER_2_MINTEMP) {
-#if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
-    minttemp_raw[2] += OVERSAMPLENR;
-#else
-    minttemp_raw[2] -= OVERSAMPLENR;
-#endif
+    #if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
+        minttemp_raw[2] += OVERSAMPLENR;
+    #else
+        minttemp_raw[2] -= OVERSAMPLENR;
+    #endif
   }
 #endif //MINTEMP 2
 #if (PROBES > 2) && defined(HEATER_2_MAXTEMP)
   maxttemp[2] = HEATER_2_MAXTEMP;
   while(analog2temp(maxttemp_raw[2], 2) > HEATER_2_MAXTEMP) {
-#if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
-    maxttemp_raw[2] -= OVERSAMPLENR;
-#else
-    maxttemp_raw[2] += OVERSAMPLENR;
-#endif
+    #if HEATER_2_RAW_LO_TEMP < HEATER_2_RAW_HI_TEMP
+        maxttemp_raw[2] -= OVERSAMPLENR;
+    #else
+        maxttemp_raw[2] += OVERSAMPLENR;
+    #endif
   }
 #endif //MAXTEMP 2
 
 #ifdef BED_MINTEMP
   /* No bed MINTEMP error implemented?!? */ /*
   while(analog2tempBed(bed_minttemp_raw) < BED_MINTEMP) {
-#if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
-    bed_minttemp_raw += OVERSAMPLENR;
-#else
-    bed_minttemp_raw -= OVERSAMPLENR;
-#endif
+    #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
+        bed_minttemp_raw += OVERSAMPLENR;
+    #else
+        bed_minttemp_raw -= OVERSAMPLENR;
+    #endif
   }
   */
-#endif //BED_MINTEMP
+#endif //BED_MINTEMP  no error?
 #ifdef BED_MAXTEMP
   while(analog2tempBed(bed_maxttemp_raw) > BED_MAXTEMP) {
-#if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
-    bed_maxttemp_raw -= OVERSAMPLENR;
-#else
-    bed_maxttemp_raw += OVERSAMPLENR;
-#endif
+    #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
+        bed_maxttemp_raw -= OVERSAMPLENR;
+    #else
+        bed_maxttemp_raw += OVERSAMPLENR;
+    #endif
   }
 #endif //BED_MAXTEMP
 }
@@ -931,8 +906,7 @@ void tp_init(){
 void setWatch() 
 {  
 #ifdef WATCH_TEMP_PERIOD
-  for (int e = 0; e < PROBES
-; e++)
+  for (int e = 0; e < PROBES; e++)
   {
     if(degHotend(e) < degTargetHotend(e) - (WATCH_TEMP_INCREASE * 2))
     {
@@ -1405,7 +1379,7 @@ ISR(TIMER0_COMPB_vect)
 #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
   // BED
   if (soft_pwm_b < slow_pwm_count) {
-    // turn OFF heather only if the minimum time is up 
+    // turn OFF heater only if the minimum time is up 
     if (state_timer_heater_b == 0) { 
       // if change state set timer 
       if (state_heater_b == 1) {
