@@ -27,18 +27,18 @@
     http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
 
  */
-
+#include "Configuration.h"
 #include "temperature.h"
 #include "thermistortables.h"
 
 //===========================================================================
 //=============================public variables============================
 //===========================================================================
-int target_temperature[PROBES] = { 0 };
+//int target_temperature[PROBES] = { 0 };
 int target_temperature_bed = 0;
 
-int current_temperature_raw[PROBES] = { 0 };
-float current_temperature[PROBES] = { 0.0 };
+//int current_temperature_raw[PROBES] = { 0 };
+//float current_temperature[PROBES] = { 0.0 };
 
 int current_temperature_bed_raw = 0;
 float current_temperature_bed = 0.0;

@@ -65,53 +65,53 @@ extern float current_temperature_bed;
 //inline so that there is no performance decrease.
 //deg=degreeCelsius
 
-FORCE_INLINE float degHotend(uint8_t PROBE) {  
+inline float degHotend(uint8_t PROBE) {  
   return current_temperature[PROBE];
 };
 
 #ifdef SHOW_TEMP_ADC_VALUES
-  FORCE_INLINE float rawHotendTemp(uint8_t PROBE) {  
+  inline float rawHotendTemp(uint8_t PROBE) {  
     return current_temperature_raw[PROBE];
   };
 
-  FORCE_INLINE float rawBedTemp() {  
+  inline float rawBedTemp() {  
     return current_temperature_bed_raw;
   };
 #endif
 
-FORCE_INLINE float degBed() {
+inline float degBed() {
   return current_temperature_bed;
 };
 
-FORCE_INLINE float degTargetHotend(uint8_t PROBE) {  
+inline float degTargetHotend(uint8_t PROBE) {  
   return target_temperature[PROBE];
 };
 
-FORCE_INLINE float degTargetBed() {   
+inline float degTargetBed() {   
   return target_temperature_bed;
 };
 
-FORCE_INLINE void setTargetHotend(const float &celsius, uint8_t PROBE) {  
+inline void setTargetHotend(const float &celsius, uint8_t PROBE) {  
   target_temperature[PROBE] = celsius;
 };
 
-FORCE_INLINE void setTargetBed(const float &celsius) {  
+inline void setTargetBed(const float &celsius) {  
   target_temperature_bed = celsius;
 };
 
-FORCE_INLINE bool isHeatingHotend(uint8_t PROBE){  
+inline bool isHeatingHotend(uint8_t PROBE){  
   return target_temperature[PROBE] > current_temperature[PROBE];
 };
 
-FORCE_INLINE bool isHeatingBed() {
+inline bool isHeatingBed() {
   return target_temperature_bed > current_temperature_bed;
 };
 
-FORCE_INLINE bool isCoolingHotend(uint8_t PROBE) {  
+inline bool isCoolingHotend(uint8_t PROBE) {  
   return target_temperature[PROBE] < current_temperature[PROBE];
 };
 
-FORCE_INLINE bool isCoolingBed() {
+inline bool isCoolingBed() {
   return target_temperature_bed < current_temperature_bed;
 };
 
@@ -160,7 +160,7 @@ static bool thermal_runaway = false;
   #endif
 #endif
 
-FORCE_INLINE void autotempShutdown(){
+inline void autotempShutdown(){
  #ifdef AUTOTEMP
  if(autotemp_enabled)
  {
