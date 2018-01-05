@@ -36,6 +36,7 @@
 //===========================================================================
 //int target_temperature[PROBES] = { 0 };
 int target_temperature_bed = 0;
+#define HEATER_BED_PIN 6
 
 //int current_temperature_raw[PROBES] = { 0 };
 //float current_temperature[PROBES] = { 0.0 };
@@ -142,9 +143,6 @@ static volatile bool temp_meas_ready = false;
 #ifdef TEMP_SENSOR_1_AS_REDUNDANT
   static void *heater_ttbl_map[2] = {(void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE };
   static uint8_t heater_ttbllen_map[2] = { HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN };
-#else
-  static void *heater_ttbl_map[PROBES] = { (void *)HEATER_0_TEMPTABLE, (void *)HEATER_1_TEMPTABLE, (void *)HEATER_2_TEMPTABLE };
-  static uint8_t heater_ttbllen_map[PROBES] = { HEATER_0_TEMPTABLE_LEN, HEATER_1_TEMPTABLE_LEN, HEATER_2_TEMPTABLE_LEN };
 #endif
 
 static float analog2temp(int raw, uint8_t e);
@@ -163,6 +161,11 @@ static void updateTemperaturesFromRawValues();
 //===========================================================================
 //=============================   functions      ============================
 //===========================================================================
+
+void kill(){
+  digitalWrite(HEATER_BED_PIN,0);
+  Serial.println("Kill(); routine. Cut power to heater");
+}
 
 void PID_autotune(float temp, int PROBE, int ncycles)
 {
@@ -192,11 +195,11 @@ void PID_autotune(float temp, int PROBE, int ncycles)
        ||(PROBE < 0)
   #endif
        ){
-          SERIAL_ECHOLN("PID Autotune failed. Bad PROBE number.");
+          Serial.println("PID Autotune failed. Bad PROBE number.");
           return;
         }
 	
-  SERIAL_ECHOLN("PID Autotune start");
+  Serial.println("PID Autotune start");
   
   disable_heater(); // switch off all heaters.
 
@@ -254,37 +257,37 @@ void PID_autotune(float temp, int PROBE, int ncycles)
             if(bias > (PROBE<0?(MAX_BED_POWER):(PID_MAX))/2) d = (PROBE<0?(MAX_BED_POWER):(PID_MAX)) - 1 - bias;
             else d = bias;
 
-            SERIAL_PROTOCOLPGM(" bias: "); SERIAL_PROTOCOL(bias);
-            SERIAL_PROTOCOLPGM(" d: "); SERIAL_PROTOCOL(d);
-            SERIAL_PROTOCOLPGM(" min: "); SERIAL_PROTOCOL(min);
-            SERIAL_PROTOCOLPGM(" max: "); SERIAL_PROTOCOLLN(max);
+            Serial.print(" bias: "); Serial.print(bias);
+            Serial.print(" d: "); Serial.print(d);
+            Serial.print(" min: "); Serial.print(min);
+            Serial.print(" max: "); Serial.println(max);
             if(cycles > 2) {
               Ku = (4.0*d)/(3.14159*(max-min)/2.0);
               Tu = ((float)(t_low + t_high)/1000.0);
-              SERIAL_PROTOCOLPGM(" Ku: "); SERIAL_PROTOCOL(Ku);
-              SERIAL_PROTOCOLPGM(" Tu: "); SERIAL_PROTOCOLLN(Tu);
+              Serial.print(" Ku: "); Serial.print(Ku);
+              Serial.print(" Tu: "); Serial.println(Tu);
               Kp = 0.6*Ku;
               Ki = 2*Kp/Tu;
               Kd = Kp*Tu/8;
-              SERIAL_PROTOCOLLNPGM(" Classic PID ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
+              Serial.println(" Classic PID ");
+              Serial.print(" Kp: "); Serial.println(Kp);
+              Serial.print(" Ki: "); Serial.println(Ki);
+              Serial.print(" Kd: "); Serial.println(Kd);
               /*
               Kp = 0.33*Ku;
               Ki = Kp/Tu;
               Kd = Kp*Tu/3;
-              SERIAL_PROTOCOLLNPGM(" Some overshoot ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
+              Serial.println(" Some overshoot ");
+              Serial.print(" Kp: "); Serial.println(Kp);
+              Serial.print(" Ki: "); Serial.println(Ki);
+              Serial.print(" Kd: "); Serial.println(Kd);
               Kp = 0.2*Ku;
               Ki = 2*Kp/Tu;
               Kd = Kp*Tu/3;
-              SERIAL_PROTOCOLLNPGM(" No overshoot ");
-              SERIAL_PROTOCOLPGM(" Kp: "); SERIAL_PROTOCOLLN(Kp);
-              SERIAL_PROTOCOLPGM(" Ki: "); SERIAL_PROTOCOLLN(Ki);
-              SERIAL_PROTOCOLPGM(" Kd: "); SERIAL_PROTOCOLLN(Kd);
+              Serial.println(" No overshoot ");
+              Serial.print(" Kp: "); Serial.println(Kp);
+              Serial.print(" Ki: "); Serial.println(Ki);
+              Serial.print(" Kd: "); Serial.println(Kd);
               */
             }
           }
@@ -298,34 +301,33 @@ void PID_autotune(float temp, int PROBE, int ncycles)
       } 
     }
     if(input > (temp + 20)) {
-      SERIAL_PROTOCOLLNPGM("PID Autotune failed! Temperature too high");
+      Serial.println("PID Autotune failed! Temperature too high");
       return;
     }
     if(millis() - temp_millis > 2000) {
       int p;
       if (PROBE<0){
         p=soft_pwm_bed;       
-        SERIAL_PROTOCOLPGM("ok B:");
+        Serial.print("ok B:");
       }else{
         p=soft_pwm[PROBE];       
-        SERIAL_PROTOCOLPGM("ok T:");
+        Serial.print("ok T:");
       }
 			
-      SERIAL_PROTOCOL(input);   
-      SERIAL_PROTOCOLPGM(" @:");
-      SERIAL_PROTOCOLLN(p);       
+      Serial.print(input);   
+      Serial.print(" @:");
+      Serial.println(p);       
 
       temp_millis = millis();
     }
     if(((millis() - t1) + (millis() - t2)) > (10L*60L*1000L*2L)) {
-      SERIAL_PROTOCOLLNPGM("PID Autotune failed! timeout");
+      Serial.println("PID Autotune failed! timeout");
       return;
     }
     if(cycles > ncycles) {
-      SERIAL_PROTOCOLLNPGM("PID Autotune finished! Put the last Kp, Ki and Kd constants from above into Configuration.h");
+      Serial.println("PID Autotune finished! Put the last Kp, Ki and Kd constants from above into Configuration.h");
       return;
     }
-    lcd_update(); //commented out by Josh, 8/19/2015
   }
 }
 
@@ -609,7 +611,7 @@ void manage_heater()
       else
       {
         soft_pwm_bed = 0;
-        WRITE(HEATER_BED_PIN,LOW);
+        digitalWrite(HEATER_BED_PIN,LOW);
       }
     #else //#ifdef BED_LIMIT_SWITCHING
       // Check if temperature is within the correct band
@@ -627,7 +629,7 @@ void manage_heater()
       else
       {
         soft_pwm_bed = 0;
-        WRITE(HEATER_BED_PIN,LOW);
+        digitalWrite(HEATER_BED_PIN,LOW);
       }
     #endif
   #endif 
@@ -973,7 +975,7 @@ void disable_heater()
     target_temperature[0]=0;
     soft_pwm[0]=0;
     #if defined(HEATER_0_PIN) && HEATER_0_PIN > -1  
-      WRITE(HEATER_0_PIN,LOW);
+      digitalWrite(HEATER_0_PIN,LOW);
     #endif
   #endif
      
@@ -981,7 +983,7 @@ void disable_heater()
     target_temperature[1]=0;
     soft_pwm[1]=0;
     #if defined(HEATER_1_PIN) && HEATER_1_PIN > -1 
-      WRITE(HEATER_1_PIN,LOW);
+      digitalWrite(HEATER_1_PIN,LOW);
     #endif
   #endif
       
@@ -989,7 +991,7 @@ void disable_heater()
     target_temperature[2]=0;
     soft_pwm[2]=0;
     #if defined(HEATER_2_PIN) && HEATER_2_PIN > -1  
-      WRITE(HEATER_2_PIN,LOW);
+      digitalWrite(HEATER_2_PIN,LOW);
     #endif
   #endif 
 
@@ -997,7 +999,7 @@ void disable_heater()
     target_temperature_bed=0;
     soft_pwm_bed=0;
     #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1  
-      WRITE(HEATER_BED_PIN,LOW);
+      digitalWrite(HEATER_BED_PIN,LOW);
     #endif
   #endif 
 }
@@ -1030,18 +1032,21 @@ void min_temp_error(uint8_t e) {
 
 void bed_max_temp_error(void) {
 #if HEATER_BED_PIN > -1
-  WRITE(HEATER_BED_PIN, 0);
+  digitalWrite(HEATER_BED_PIN, 0);
 #endif
   if(IsStopped() == false) {
-    SERIAL_ERROR_START;
-    SERIAL_ERRORLNPGM("Temperature heated bed switched off. MAXTEMP triggered !!");
-    LCD_ALERTMESSAGEPGM("Err: MAXTEMP BED");
+    Serial.println("Temperature heated bed switched off. MAXTEMP triggered !!");
+    Serial.println("Err: MAXTEMP BED");
   }
   #ifndef BOGUS_TEMPERATURE_FAILSAFE_OVERRIDE
   Stop();
   #endif
 }
 
+void kill(){
+  digitalWrite(HEATER_BED_PIN,0);
+  Serial.println("Kill(); routine. Cut power to heater");
+}
 
 // Timer 0 is shared with millies
 ISR(TIMER0_COMPB_vect)
@@ -1089,46 +1094,46 @@ ISR(TIMER0_COMPB_vect)
   if(pwm_count == 0){
     soft_pwm_0 = soft_pwm[0];
     if(soft_pwm_0 > 0) { 
-      WRITE(HEATER_0_PIN,1);
+      digitalWrite(HEATER_0_PIN,1);
 #ifdef HEATERS_PARALLEL
-      WRITE(HEATER_1_PIN,1);
+      digitalWrite(HEATER_1_PIN,1);
 #endif
-    } else WRITE(HEATER_0_PIN,0);
+    } else digitalWrite(HEATER_0_PIN,0);
     
 #if PROBES > 1
     soft_pwm_1 = soft_pwm[1];
-    if(soft_pwm_1 > 0) WRITE(HEATER_1_PIN,1); else WRITE(HEATER_1_PIN,0);
+    if(soft_pwm_1 > 0) digitalWrite(HEATER_1_PIN,1); else digitalWrite(HEATER_1_PIN,0);
 #endif
 #if PROBES > 2
     soft_pwm_2 = soft_pwm[2];
-    if(soft_pwm_2 > 0) WRITE(HEATER_2_PIN,1); else WRITE(HEATER_2_PIN,0);
+    if(soft_pwm_2 > 0) digitalWrite(HEATER_2_PIN,1); else digitalWrite(HEATER_2_PIN,0);
 #endif
 #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
     soft_pwm_b = soft_pwm_bed;
-    if(soft_pwm_b > 0) WRITE(HEATER_BED_PIN,1); else WRITE(HEATER_BED_PIN,0);
+    if(soft_pwm_b > 0) digitalWrite(HEATER_BED_PIN,1); else digitalWrite(HEATER_BED_PIN,0);
 #endif
 #ifdef FAN_SOFT_PWM
     soft_pwm_fan = fanSpeedSoftPwm / 2;
-    if(soft_pwm_fan > 0) WRITE(FAN_PIN,1); else WRITE(FAN_PIN,0);
+    if(soft_pwm_fan > 0) digitalWrite(FAN_PIN,1); else digitalWrite(FAN_PIN,0);
 #endif
   }
   if(soft_pwm_0 < pwm_count) { 
-    WRITE(HEATER_0_PIN,0);
+    digitalWrite(HEATER_0_PIN,0);
 #ifdef HEATERS_PARALLEL
-    WRITE(HEATER_1_PIN,0);
+    digitalWrite(HEATER_1_PIN,0);
 #endif
   }
 #if PROBES > 1
-  if(soft_pwm_1 < pwm_count) WRITE(HEATER_1_PIN,0);
+  if(soft_pwm_1 < pwm_count) digitalWrite(HEATER_1_PIN,0);
 #endif
 #if PROBES > 2
-  if(soft_pwm_2 < pwm_count) WRITE(HEATER_2_PIN,0);
+  if(soft_pwm_2 < pwm_count) digitalWrite(HEATER_2_PIN,0);
 #endif
 #if defined(HEATER_BED_PIN) && HEATER_BED_PIN > -1
-  if(soft_pwm_b < pwm_count) WRITE(HEATER_BED_PIN,0);
+  if(soft_pwm_b < pwm_count) digitalWrite(HEATER_BED_PIN,0);
 #endif
 #ifdef FAN_SOFT_PWM
-  if(soft_pwm_fan < pwm_count) WRITE(FAN_PIN,0);
+  if(soft_pwm_fan < pwm_count) digitalWrite(FAN_PIN,0);
 #endif
   
   pwm_count += (1 << SOFT_PWM_SCALE);
@@ -1154,9 +1159,9 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_0 = MIN_STATE_TIME;
 	}
 	state_heater_0 = 1;
-	WRITE(HEATER_0_PIN, 1);
+	digitalWrite(HEATER_0_PIN, 1);
 #ifdef HEATERS_PARALLEL
-	WRITE(HEATER_1_PIN, 1);
+	digitalWrite(HEATER_1_PIN, 1);
 #endif
       }
     } else {
@@ -1167,9 +1172,9 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_0 = MIN_STATE_TIME;
 	}
 	state_heater_0 = 0;
-	WRITE(HEATER_0_PIN, 0);
+	digitalWrite(HEATER_0_PIN, 0);
 #ifdef HEATERS_PARALLEL
-	WRITE(HEATER_1_PIN, 0);
+	digitalWrite(HEATER_1_PIN, 0);
 #endif
       }
     }
@@ -1185,7 +1190,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_1 = MIN_STATE_TIME;
 	}
 	state_heater_1 = 1;
-	WRITE(HEATER_1_PIN, 1);
+	digitalWrite(HEATER_1_PIN, 1);
       }
     } else {
       // turn OFF heather only if the minimum time is up 
@@ -1195,7 +1200,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_1 = MIN_STATE_TIME;
 	}
 	state_heater_1 = 0;
-	WRITE(HEATER_1_PIN, 0);
+	digitalWrite(HEATER_1_PIN, 0);
       }
     }
 #endif
@@ -1211,7 +1216,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_2 = MIN_STATE_TIME;
 	}
 	state_heater_2 = 1;
-	WRITE(HEATER_2_PIN, 1);
+	digitalWrite(HEATER_2_PIN, 1);
       }
     } else {
       // turn OFF heather only if the minimum time is up 
@@ -1221,7 +1226,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_2 = MIN_STATE_TIME;
 	}
 	state_heater_2 = 0;
-	WRITE(HEATER_2_PIN, 0);
+	digitalWrite(HEATER_2_PIN, 0);
       }
     }
 #endif
@@ -1237,7 +1242,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_b = MIN_STATE_TIME;
 	}
 	state_heater_b = 1;
-	WRITE(HEATER_BED_PIN, 1);
+	digitalWrite(HEATER_BED_PIN, 1);
       }
     } else {
       // turn OFF heather only if the minimum time is up 
@@ -1247,7 +1252,7 @@ ISR(TIMER0_COMPB_vect)
 	  state_timer_heater_b = MIN_STATE_TIME;
 	}
 	state_heater_b = 0;
-	WRITE(HEATER_BED_PIN, 0);
+	digitalWrite(HEATER_BED_PIN, 0);
       }
     }
 #endif
@@ -1262,9 +1267,9 @@ ISR(TIMER0_COMPB_vect)
 	state_timer_heater_0 = MIN_STATE_TIME;
       }
       state_heater_0 = 0;
-      WRITE(HEATER_0_PIN, 0);
+      digitalWrite(HEATER_0_PIN, 0);
 #ifdef HEATERS_PARALLEL
-      WRITE(HEATER_1_PIN, 0);
+      digitalWrite(HEATER_1_PIN, 0);
 #endif
     }
   }
@@ -1279,7 +1284,7 @@ ISR(TIMER0_COMPB_vect)
 	state_timer_heater_1 = MIN_STATE_TIME;
       }
       state_heater_1 = 0;
-      WRITE(HEATER_1_PIN, 0);
+      digitalWrite(HEATER_1_PIN, 0);
     }
   }
 #endif
@@ -1294,7 +1299,7 @@ ISR(TIMER0_COMPB_vect)
 	state_timer_heater_2 = MIN_STATE_TIME;
       }
       state_heater_2 = 0;
-      WRITE(HEATER_2_PIN, 0);
+      digitalWrite(HEATER_2_PIN, 0);
     }
   }
 #endif
@@ -1309,7 +1314,7 @@ ISR(TIMER0_COMPB_vect)
 	state_timer_heater_b = MIN_STATE_TIME;
       }
       state_heater_b = 0;
-      WRITE(HEATER_BED_PIN, 0);
+      digitalWrite(HEATER_BED_PIN, 0);
     }
   }
 #endif
@@ -1317,9 +1322,9 @@ ISR(TIMER0_COMPB_vect)
 #ifdef FAN_SOFT_PWM
   if (pwm_count == 0){
     soft_pwm_fan = fanSpeedSoftPwm / 2;
-    if (soft_pwm_fan > 0) WRITE(FAN_PIN,1); else WRITE(FAN_PIN,0);
+    if (soft_pwm_fan > 0) digitalWrite(FAN_PIN,1); else digitalWrite(FAN_PIN,0);
   }
-  if (soft_pwm_fan < pwm_count) WRITE(FAN_PIN,0);
+  if (soft_pwm_fan < pwm_count) digitalWrite(FAN_PIN,0);
 #endif
   
   pwm_count += (1 << SOFT_PWM_SCALE);
