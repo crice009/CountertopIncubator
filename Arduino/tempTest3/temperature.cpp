@@ -44,32 +44,10 @@ int target_temperature_bed = 0;
 int current_temperature_bed_raw = 0;
 float current_temperature_bed = 0.0;
 
-#ifdef TEMP_SENSOR_1_AS_REDUNDANT
-  int redundant_temperature_raw = 0;
-  float redundant_temperature = 0.0;
-#endif
+float bedKp=DEFAULT_bedKp;
+float bedKi=(DEFAULT_bedKi*PID_dT);
+float bedKd=(DEFAULT_bedKd/PID_dT);
 
-#ifdef PIDTEMP
-  float Kp=DEFAULT_Kp;
-  float Ki=(DEFAULT_Ki*PID_dT);
-  float Kd=(DEFAULT_Kd/PID_dT);
-#endif //PIDTEMP
-
-#ifdef PIDTEMPBED
-  float bedKp=DEFAULT_bedKp;
-  float bedKi=(DEFAULT_bedKi*PID_dT);
-  float bedKd=(DEFAULT_bedKd/PID_dT);
-#endif //PIDTEMPBED
-  
-#ifdef FAN_SOFT_PWM
-  unsigned char fanSpeedSoftPwm;
-#endif
-
-unsigned char soft_pwm_bed;
-  
-#ifdef BABYSTEPPING
-  volatile int babystepsTodo[3]={0,0,0};
-#endif
 
 //===========================================================================
 //=============================private variables============================
@@ -326,8 +304,7 @@ void PID_autotune(float temp, int PROBE, int ncycles)
   }
 }
 
-void updatePID()
-{
+void updatePID(){
 #ifdef PIDTEMP
   for(int e = 0; e < PROBES; e++) { 
      temp_iState_max[e] = PID_INTEGRAL_DRIVE_MAX / Ki;  
