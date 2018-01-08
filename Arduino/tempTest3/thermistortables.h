@@ -1,12 +1,15 @@
 #ifndef THERMISTORTABLES_H_
 #define THERMISTORTABLES_H_
 
+long BEDTEMPTABLE_LEN = 61;
+
 #define OVERSAMPLENR 16
 
 #if (THERMISTORHEATER_0 == 1) || (THERMISTORHEATER_1 == 1)  || (THERMISTORHEATER_2 == 1) || (THERMISTORBED == 1) //100k bed thermistor
 
+#define BEDTEMPTABLE_LEN 61
 const short temptable_1[][2] PROGMEM = {
-{       23*OVERSAMPLENR ,       300     },
+{       23*OVERSAMPLENR ,       300     },        
 {       25*OVERSAMPLENR ,       295     },
 {       27*OVERSAMPLENR ,       290     },
 {       28*OVERSAMPLENR ,       285     },

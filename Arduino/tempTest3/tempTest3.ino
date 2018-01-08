@@ -1,4 +1,3 @@
-#include "temperature.cpp"
 #include "Configuration.h"
 
 #define BED_USES_THERMISTOR  //this tells the firmware that the bed uses a thermistor...
@@ -34,6 +33,39 @@ void loop() {
 int ledState = LOW;                   //global -- used in blinkWOD()
 unsigned long previousMillis = 0;     //global -- used in blinkWOD()
 
+byte pwm_bed = 0;                     //global -- used in many many functions
+bool thermal_runaway = false;         //global -- defining the inital state of the thermal runaway routine...
+//#define BEDTEMPTABLE_LEN 61
+
+        //derived from public variables of temperature.cpp in MARLIN
+float target_temperature_bed = 29.4444444;
+
+int current_temperature_bed_raw = 0;
+float current_temperature_bed = 0.0;
+float bedKp=DEFAULT_bedKp;
+float bedKi=(DEFAULT_bedKi*PID_dT);
+float bedKd=(DEFAULT_bedKd/PID_dT);
+        //derived from private variables of temperature.cpp in MARLIN
+static volatile bool temp_meas_ready = false;
+//static cannot be external:
+static float temp_iState_bed = { 0 };
+static float temp_dState_bed = { 0 };
+static float pTerm_bed;
+static float iTerm_bed;
+static float dTerm_bed;
+//int output;
+static float pid_error_bed;
+static float temp_iState_min_bed;
+static float temp_iState_max_bed;
+//
+static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
+int thermal_runaway_bed_state_machine = 1;
+long unsigned int thermal_runaway_bed_timer = 100;
+//
+static void updateTemperaturesFromRawValues();  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  
+//================================================================================
+// a silly function to blink an LED for debugging...
 void blinkWOD(int temp){
 
   unsigned long currentMillis = millis();
@@ -55,10 +87,8 @@ void blinkWOD(int temp){
 }
 
 //================================================================================
-byte pwm_bed = 0;                   //global -- used in many many functions
-
-void PID_autotune(float temp, int PROBE, int ncycles)
-{
+// A masterful routine to determine the PID constants, based on the heater and thermistor
+void PID_autotune(float temp, int PROBE, int ncycles){
   float input = 0.0;
   int cycles=0;
   bool heating = true;
@@ -187,18 +217,20 @@ void PID_autotune(float temp, int PROBE, int ncycles)
 }
 
 //===========================================================================
-void updatePID(){
+// simple getter...   still not understood
+void updatePID() {
   temp_iState_max_bed = PID_INTEGRAL_DRIVE_MAX / bedKi;  
 }
 
 //===========================================================================
+// simple getter...   returns pwm_bed
 int getHeaterPower() {
   return pwm_bed;
 }
 
 //===========================================================================
-void manage_heater()
-{
+// calculates the PID output and then analog writes to the heater
+void manage_heater() {
   float pid_input;
   float pid_output;
 
@@ -206,73 +238,47 @@ void manage_heater()
 
   updateTemperaturesFromRawValues(); //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<   
   
-  previous_millis_bed_heater = millis();
+  //previous_millis_bed_heater = millis();
 
-  thermal_runaway_protection(&thermal_runaway_bed_state_machine, &thermal_runaway_bed_timer, current_temperature_bed, target_temperature_bed, 9, THERMAL_RUNAWAY_PROTECTION_BED_PERIOD, THERMAL_RUNAWAY_PROTECTION_BED_HYSTERESIS);
+  thermal_runaway_protection(&thermal_runaway_bed_state_machine, &thermal_runaway_bed_timer, current_temperature_bed, target_temperature_bed, THERMAL_RUNAWAY_PROTECTION_BED_PERIOD, THERMAL_RUNAWAY_PROTECTION_BED_HYSTERESIS);
+  if(thermal_runaway) return;
+  
   pid_input = current_temperature_bed;
 
-  #ifndef PID_OPENLOOP
-    pid_error_bed = target_temperature_bed - pid_input;
-    pTerm_bed = bedKp * pid_error_bed;
-    temp_iState_bed += pid_error_bed;
-    temp_iState_bed = constrain(temp_iState_bed, temp_iState_min_bed, temp_iState_max_bed);
-    iTerm_bed = bedKi * temp_iState_bed;
+  pid_error_bed = target_temperature_bed - pid_input;
+  pTerm_bed = bedKp * pid_error_bed;
+  temp_iState_bed += pid_error_bed;
+  temp_iState_bed = constrain(temp_iState_bed, temp_iState_min_bed, temp_iState_max_bed);
+  iTerm_bed = bedKi * temp_iState_bed;
 
-    //K1 defined in Configuration.h in the PID settings
-    #define K2 (1.0-K1)
-    dTerm_bed= (bedKd * (pid_input - temp_dState_bed))*K2 + (K1 * dTerm_bed);
-    temp_dState_bed = pid_input;
+  //K1 defined in Configuration.h in the PID settings
+  #define K2 (1.0-K1)
+  dTerm_bed= (bedKd * (pid_input - temp_dState_bed))*K2 + (K1 * dTerm_bed);
+  temp_dState_bed = pid_input;
 
-    pid_output = pTerm_bed + iTerm_bed - dTerm_bed;
-    if(pid_output > MAX_BED_POWER) {
-      if (pid_error_bed > 0 )  temp_iState_bed -= pid_error_bed; // conditional un-integration
-      pid_output=MAX_BED_POWER;
-    }else if(pid_output < 0){
-      if (pid_error_bed < 0 )  temp_iState_bed -= pid_error_bed; // conditional un-integration
-      pid_output=0;
-    }
-  #else 
-    pid_output = constrain(target_temperature_bed, 0, MAX_BED_POWER);
-  #endif //PID_OPENLOOP
+  pid_output = pTerm_bed + iTerm_bed - dTerm_bed;
+  if(pid_output > MAX_BED_POWER) {
+    if (pid_error_bed > 0 )  temp_iState_bed -= pid_error_bed; // conditional un-integration
+    pid_output=MAX_BED_POWER;
+  }else if(pid_output < 0){
+    if (pid_error_bed < 0 )  temp_iState_bed -= pid_error_bed; // conditional un-integration
+    pid_output=0;
+  }
+  pid_output = constrain(target_temperature_bed, 0, MAX_BED_POWER);
 
   if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP)) {
-    pwm_bed = (int)pid_output >> 1;
+    pwm_bed = (byte)pid_output;
   }else{
     pwm_bed = 0;
   }
-
-    #elif !defined(BED_LIMIT_SWITCHING)
-      // Check if temperature is within the correct range
-      if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP)){
-        if(current_temperature_bed >= target_temperature_bed){
-          pwm_bed = 0;
-        }else{
-          pwm_bed = MAX_BED_POWER>>1;
-        }
-      }else{
-        pwm_bed = 0;
-        digitalWrite(HEATER_BED_PIN,LOW);
-      }
-    #else //#ifdef BED_LIMIT_SWITCHING
-      // Check if temperature is within the correct band
-      if((current_temperature_bed > BED_MINTEMP) && (current_temperature_bed < BED_MAXTEMP)){
-        if(current_temperature_bed > target_temperature_bed + BED_HYSTERESIS){
-          pwm_bed = 0;
-        }else if(current_temperature_bed <= target_temperature_bed - BED_HYSTERESIS){
-          pwm_bed = MAX_BED_POWER>>1;
-        }
-      }else{
-        soft_pwm_bed = 0;
-        digitalWrite(HEATER_BED_PIN,LOW);
-      }
-    #endif
+  analogWrite(HEATER_BED_PIN, pwm_bed);
 }
 
 //=============================================================================================
 #define PGM_RD_W(x)   (short)pgm_read_word(&x)
 // Derived from RepRap FiveD PROBE::getTemperature()
 // For bed temperature measurement.
-static float analog2tempBed(int raw) {
+float analog2tempBed(int raw) {
     float celsius = 0;
     byte i;
 
@@ -295,33 +301,7 @@ static float analog2tempBed(int raw) {
 }
 
 //==============================================================================================
-        //derived from public variables of temperature.cpp in MARLIN
-int target_temperature_bed = 0;
-#define HEATER_BED_PIN 6
-int current_temperature_bed_raw = 0;
-float current_temperature_bed = 0.0;
-float bedKp=DEFAULT_bedKp;
-float bedKi=(DEFAULT_bedKi*PID_dT);
-float bedKd=(DEFAULT_bedKd/PID_dT);
-        //derived from private variables of temperature.cpp in MARLIN
-static volatile bool temp_meas_ready = false;
-//static cannot be external:
-static float temp_iState_bed = { 0 };
-static float temp_dState_bed = { 0 };
-static float pTerm_bed;
-static float iTerm_bed;
-static float dTerm_bed;
-//int output;
-static float pid_error_bed;
-static float temp_iState_min_bed;
-static float temp_iState_max_bed;
-//
-static int bed_maxttemp_raw = HEATER_BED_RAW_HI_TEMP;
-//
-static float analog2temp(int raw, uint8_t e);
-static float analog2tempBed(int raw);
-static void updateTemperaturesFromRawValues();  //<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  
+
 void tp_init(){
   temp_iState_min_bed = 0.0;
   temp_iState_max_bed = PID_INTEGRAL_DRIVE_MAX / bedKi;
@@ -360,7 +340,6 @@ void tp_init(){
   // Wait for temperature measurement to settle
   delay(250);
 
-#ifdef BED_MINTEMP
   /* No bed MINTEMP error implemented?!? */ /*
   while(analog2tempBed(bed_minttemp_raw) < BED_MINTEMP) {
     #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
@@ -370,8 +349,6 @@ void tp_init(){
     #endif
   }
   */
-#endif //BED_MINTEMP  no error?
-#ifdef BED_MAXTEMP
   while(analog2tempBed(bed_maxttemp_raw) > BED_MAXTEMP) {
     #if HEATER_BED_RAW_LO_TEMP < HEATER_BED_RAW_HI_TEMP
         bed_maxttemp_raw -= OVERSAMPLENR;
@@ -379,31 +356,27 @@ void tp_init(){
         bed_maxttemp_raw += OVERSAMPLENR;
     #endif
   }
-#endif //BED_MAXTEMP
 }
 
 //=================================================================================================
-void thermal_runaway_protection(int *state, unsigned long *timer, float temperature, float target_temperature, int heater_id, int period_seconds, int hysteresis_degc)
-{
+
+bool thermal_runaway_protection(int *state, unsigned long *timer, float temperature, float target_temperature, int period_seconds, int hysteresis_degc) {
 /*
-      SERIAL_ECHO_START;
-      SERIAL_ECHO("Thermal Thermal Runaway Running. Heater ID:");
-      SERIAL_ECHO(heater_id);
-      SERIAL_ECHO(" ;  State:");
-      SERIAL_ECHO(*state);
-      SERIAL_ECHO(" ;  Timer:");
-      SERIAL_ECHO(*timer);
-      SERIAL_ECHO(" ;  Temperature:");
-      SERIAL_ECHO(temperature);
-      SERIAL_ECHO(" ;  Target Temp:");
-      SERIAL_ECHO(target_temperature);
-      SERIAL_ECHOLN("");    
+      Serial.print("Thermal Runaway Running.");
+      Serial.print("  State:");
+      Serial.print(*state);
+      Serial.print("  Timer:");
+      Serial.print(*timer);
+      Serial.print("  Temperature:");
+      Serial.print(temperature);
+      Serial.print("  Target Temp:");
+      Serial.println(target_temperature);
 */
   if ((target_temperature == 0) || thermal_runaway)
   {
     *state = 0;
     *timer = 0;
-    return;
+    return thermal_runaway;
   }
   switch (*state)
   {
@@ -431,15 +404,17 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
       }
       break;
   }
+  return thermal_runaway;
 }
 
-void disable_heater()
-{
+//=================================================================================================
+void disable_heater(){
   target_temperature_bed=0;
   pwm_bed=0; 
   digitalWrite(HEATER_BED_PIN,LOW);
 }
 
+//=================================================================================================
 void bed_max_temp_error() {
   digitalWrite(HEATER_BED_PIN, 0);
   Serial.println("Temperature heated bed switched off. MAXTEMP triggered !!");
@@ -450,6 +425,7 @@ void bed_max_temp_error() {
   #endif
 }
 
+//=================================================================================================
 float scalePID_i(float i)
 {
   return i*PID_dT;
