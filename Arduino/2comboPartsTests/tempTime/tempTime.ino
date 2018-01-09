@@ -15,9 +15,23 @@
 #define OLED_RESET 13
 Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
+int tHours = 96;
+int tTemp  = 86;
+byte seconds  = 0;                 //used in timeCounter() and runningOLED()
+byte minutes  = 0;                 //used in timeCounter() and runningOLED()
+byte hours    = 0;                 //used in timeCounter() and runningOLED()
+byte days     = 0;                 //used in timeCounter() and runningOLED()
+byte Rdays    = tHours / 24;       //used in timeCounter() and runningOLED()
+byte Rhours   = tHours % 24;       //used in timeCounter() and runningOLED()
+byte Rminutes = Rhours % 60;       //used in timeCounter() and runningOLED()
+byte Rseconds = Rminutes % 60;     //used in timeCounter() and runningOLED()
+
+
+
+
 void setup() {
-  pinMode(led, OUTPUT);
   pinMode(TEMP_SENSOR_BED, INPUT);
+  //pinMode(HEATER_BED_PIN, OUTPUT);
   Serial.begin(9600);
 
   for(short i=0; i<ARRAY_LENGTH; i++){
@@ -44,9 +58,10 @@ void loop() {
     Serial.print("C          ");
     Serial.print(ftemp);
     Serial.println("F");
-    timeCounter();
-    displayOLED(round(ftemp));
+    timeCounter(tHours);
+    runningOLED(round(ftemp));
     delay(10);
+    //bangBang(tTemp, ftemp);
 }
 
 #define OVERSAMPLENR 1
@@ -91,59 +106,75 @@ const short BEDTEMPTABLE[][2] PROGMEM = {
 {       480*OVERSAMPLENR        ,       115     },
 {       516*OVERSAMPLENR        ,       110     },
 {       553*OVERSAMPLENR        ,       105     },
-{       591*OVERSAMPLENR        ,       100     },  //212
-{       628*OVERSAMPLENR        ,       95      },  //204
-{       665*OVERSAMPLENR        ,       90      },  //194
-{       702*OVERSAMPLENR        ,       85      },  //185
-{       737*OVERSAMPLENR        ,       80      },  //176
-{       770*OVERSAMPLENR        ,       75      },  //167
-{       801*OVERSAMPLENR        ,       70      },  //158
-{       830*OVERSAMPLENR        ,       65      },  //149
-{       857*OVERSAMPLENR        ,       60      },  //140
-{       881*OVERSAMPLENR        ,       55      },  //131
-{       903*OVERSAMPLENR        ,       50      },  //122
-{       922*OVERSAMPLENR        ,       45      },  //113
-{       939*OVERSAMPLENR        ,       40      },  //104
-{       954*OVERSAMPLENR        ,       35      },  //95
-{       966*OVERSAMPLENR        ,       30      },  //86
-{       977*OVERSAMPLENR        ,       25      },  //77
-{       985*OVERSAMPLENR        ,       20      },  //68
-{       993*OVERSAMPLENR        ,       15      },  //59
-{       999*OVERSAMPLENR        ,       10      },  //50
-{       1004*OVERSAMPLENR       ,       5       },  //41
+{       591*OVERSAMPLENR        ,       100     },  //212F
+{       628*OVERSAMPLENR        ,       95      },  //204F
+{       665*OVERSAMPLENR        ,       90      },  //194F
+{       702*OVERSAMPLENR        ,       85      },  //185F
+{       737*OVERSAMPLENR        ,       80      },  //176F
+{       770*OVERSAMPLENR        ,       75      },  //167F
+{       801*OVERSAMPLENR        ,       70      },  //158F
+{       830*OVERSAMPLENR        ,       65      },  //149F
+{       857*OVERSAMPLENR        ,       60      },  //140F
+{       881*OVERSAMPLENR        ,       55      },  //131F
+{       903*OVERSAMPLENR        ,       50      },  //122F
+{       922*OVERSAMPLENR        ,       45      },  //113F
+{       939*OVERSAMPLENR        ,       40      },  //104F
+{       954*OVERSAMPLENR        ,       35      },  //95F
+{       966*OVERSAMPLENR        ,       30      },  //86F
+{       977*OVERSAMPLENR        ,       25      },  //77F
+{       985*OVERSAMPLENR        ,       20      },  //68F
+{       993*OVERSAMPLENR        ,       15      },  //59F
+{       999*OVERSAMPLENR        ,       10      },  //50F
+{       1004*OVERSAMPLENR       ,       5       },  //41F
 {       1008*OVERSAMPLENR       ,       0       } //safety
 };
 
 //==============================================================================
 //============================ Functions =======================================
 //==============================================================================
-byte seconds = 0;                 //used in timeCounter() and displayOLED()
-byte minutes = 0;                 //used in timeCounter() and displayOLED()
-byte hours   = 0;                 //used in timeCounter() and displayOLED()
-int  
 unsigned long previousMillis = 0; //used in timeCounter() only
 #define PGM_RD_W(x)   (short)pgm_read_word(&x) //used in analog2temp()
 
-void displayOLED(int temp){           //display is 128x32 pixels and the cursor can be set...
+void runningOLED(int temp){           //display is 128x32 pixels and the cursor can be set...
+  //temperature line
     display.setTextSize(2);           //'size 2' font is 16 pixels high
-    display.setTextColor(WHITE);
+    display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
     display.setCursor(0,0);
-    display.print("temp:");
+    display.print("Temp: ");
     display.print(temp);
     display.println("F");
-    display.setTextSize(1);           //'size 1' font is 8 pixels high
-    display.setCursor(50,24);         //can place text >> setCursor is top left of first char 
-    display.print("time:");
+  //end temperature line
+  //remaining time line
+    display.setTextSize(1);          //'size 1' font is 8 pixels high
+    display.setCursor(0,16);         //can place text >> setCursor is top left of first char
+    display.print("Left: ");
+    display.print(Rdays);
+    display.print("d ");
+    display.print(Rhours);
+    display.print("h ");
+    display.print(Rminutes);
+    display.print("m ");
+    display.print(Rseconds);
+    display.print("s");
+  //end remaining time lines
+  //Elapsed timer line
+    display.setTextSize(1);          //'size 1' font is 8 pixels high
+    display.setCursor(0,24);         //can place text >> setCursor is top left of first char 
+    display.print("Done: ");
+    display.print(days);
+    display.print("d ");
     display.print(hours);
-    display.print(":");
+    display.print("h ");
     display.print(minutes);
-    display.print(":");
-    display.println(seconds);
+    display.print("m ");
+    display.print(seconds);
+    display.print("s");
+  //end Elapsed timer line
     display.display();
     display.clearDisplay();
 }
 
-void timeCounter(){
+void timeCounter(int tHours){
   unsigned long currentMillis = millis();
   if ( (currentMillis - previousMillis) >= 1000){
     previousMillis = previousMillis + 1000;
@@ -155,15 +186,35 @@ void timeCounter(){
         minutes = 0;
         hours = hours +1;
         if (hours == 24){
-          hours = 0;
-          
+          days = days +1;
         } // end hrs check
       } // end minutes check
     } // end seconds check
   } // end time check
+  Rdays = (tHours/24)- days;
+  Rhours = tHours - hours - Rdays*24 - days*24;
+  Rminutes = tHours*60 - minutes - 60*(tHours - hours - Rdays*24 - days*24);
+  Rseconds = tHours*3600 - seconds - 60*(tHours*60 - minutes - 60*(tHours - hours - Rdays*24 - days*24));
 }
 
-//=============================================================================================
+
+void setUpTemp(){
+  
+}
+
+void setUpTime(){
+  
+}
+
+void adjustTemp(){
+  
+}
+
+void adjustTime(){
+  
+}
+/
+/=============================================================================================
 float analog2temp(float raw) {
     float celsius = 0;
     byte i;
@@ -198,3 +249,11 @@ float smoothing (float raw){    //log the analog input value into an array, and 
   
   return smoothCriminal;
 }
+
+//void bangBang(int tTemp, float ftemp){
+//  if(tTemp > ftemp){
+//    digitalWrite(HEATER_BED_PIN,HIGH);  
+//  }else{
+//    digitalWrite(HEATER_BED_PIN,LOW);
+//  }
+//}
