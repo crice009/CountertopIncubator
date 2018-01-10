@@ -71,10 +71,11 @@ void loop() {
       bangBang(tTemp, ftemp); 
     }else{
       endHeating();
+      done();
     }
     if(digitalRead(buttonR) == LOW){
       while(digitalRead(buttonR) == LOW){
-        delay(200); //debounce time
+        delay(750); //debounce time
         //wait to unpress
       }
       menu();
@@ -166,7 +167,7 @@ void runningOLED(int temp){           //display is 128x32 pixels and the cursor 
   //remaining time line
     display.setTextSize(1);          //'size 1' font is 8 pixels high
     display.setCursor(0,16);         //can place text >> setCursor is top left of first char
-    display.print("Left: ");
+    display.print("to Go: ");
     display.print(Rdays);
     display.print("d ");
     display.print(Rhours);
@@ -210,10 +211,10 @@ void timeCounter(int tHours){
       } // end minutes check
     } // end seconds check
   } // end time check
-  Rdays = (tHours/24)- days;            //double check these...
-  Rhours = tHours - hours - 24*Rdays;
-  Rminutes = tHours*60 - minutes - 60*(Rhours + 24*Rdays);
-  Rseconds = tHours*3600 - seconds - 60*(Rminutes+ 60*(Rhours + 24*Rdays));
+  Rdays = (tHours/24) - days;                               //double check these...
+  Rhours = tHours - (24*(Rdays + days));
+  Rminutes = (60*tHours) - (60*(Rhours + hours + 24*(Rdays + days)));
+  Rseconds = (3600*tHours) - (60*(Rminutes + minutes + 60*(Rhours + hours + 24*(Rdays + days))));
 }
 
 
@@ -304,6 +305,7 @@ void setUpTime(){
         delay(750); //debounce time
         //wait to unpress
       }
+      if(48 < (tHours/24)) tooLongTimeError(); 
       return;             // Exit temp set-up with Right button
     }
   }
@@ -358,9 +360,7 @@ void adjustTemp(){
       //countdown timer
   //calculate remaining time
     int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
-    if(remaining < 0){
-        return;
-      }
+    if(remaining < 0) return;
   //onscreen things
     //temperature line
       display.setTextSize(2);           //'size 2' font is 16 pixels high
@@ -405,22 +405,22 @@ void adjustTemp(){
 
 void adjustTime(){
   bool singlepress;
+  int adjTime = 0;
   while(1){
 //wait for buttons
     while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
   //countdown timer
   //calculate remaining time
     int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
-    if(remaining < 0){
-        return;
-      }
+    if(remaining < 0) return;
   //onscreen things
     //temperature line
       display.setTextSize(2);           //'size 2' font is 16 pixels high
       display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
       display.setCursor(25,8);
-      display.print(tHours);
-      display.println("hrs");
+      if(adjTime > 0) display.print("+");
+      display.print(adjTime);
+      display.print("hrs");
     //end temperature line
     //remaining time line
       display.setTextSize(1);          //'size 1' font is 8 pixels high
@@ -433,15 +433,72 @@ void adjustTime(){
       display.display();
       display.clearDisplay();
     }
-    if(digitalRead(buttonR) == LOW){
+//button responses
+    if((digitalRead(buttonU) == LOW) && (singlepress)){
+      adjTime = adjTime +1;   // Raise temp with UP button
+      singlepress = false;
+    }
+    if((digitalRead(buttonD) == LOW) && (singlepress)){
+      adjTime = adjTime -1;   // Lower temp with DOWN button
+      singlepress = false;
+    }
+    if((digitalRead(buttonR) == LOW) && (singlepress)){  
       while(digitalRead(buttonR) == LOW){
         delay(750); //debounce time
+        if(48 < (tHours + adjTime)/24){
+          tooLongTimeError(); 
+        }else{
+          tHours = tHours + adjTime;    
+        }
         //wait to unpress
       }
       return;             // Exit temp set-up with Right button
     }
   }
 }
+
+void tooLongTimeError(){
+    //onscreen things
+    //temperature line
+      display.setTextSize(2);           //'size 2' font is 16 pixels high
+      display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
+      display.setCursor(25,8);
+      display.print("ERROR!! :(");
+    //end temperature line
+    //remaining time line
+      display.setTextSize(1);          //'size 1' font is 8 pixels high
+      display.setCursor(0,0);         //can place text >> setCursor is top left of first char
+      display.print("Time Exceeds Max Limit");
+      display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+      display.print("Going to default 96hrs");
+      tHours = 96;    // actually change the target time to 96 hrs...    
+    //end Elapsed timer line
+      display.display();
+      display.clearDisplay();
+      delay(3000);
+}
+
+void done(){
+    //onscreen things
+    //temperature line
+      display.setTextSize(2);           //'size 2' font is 16 pixels high
+      display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
+      display.setCursor(25,8);
+      display.print("Done.");
+    //end temperature line
+    //remaining time line
+      display.setTextSize(1);          //'size 1' font is 8 pixels high
+      display.setCursor(0,0);         //can place text >> setCursor is top left of first char
+      display.print("Time: ");
+      display.print(tHours);
+      display.print("  Temp: ");
+      display.print(tTemp);
+      display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+      display.print("Enjoy your tempeh :)");
+      display.display();
+      display.clearDisplay();
+}
+
 //=============================================================================================
 float analog2temp(float raw) {
     float celsius = 0;
