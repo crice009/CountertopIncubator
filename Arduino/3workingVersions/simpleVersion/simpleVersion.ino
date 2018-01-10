@@ -7,8 +7,8 @@
 #define THERMISTORBED 1      //this defines what type of thermistor is used, and hence the voltage-temp table that is referenced. all in this build are a 100k thermistor with a 4.7k pull-up resistor.
 #define HEATER_BED_PIN 6     //this defines the Arduino pin that controls the heater
 #define buttonR 2
-#define buttonU 3
-#define buttonD 4
+#define buttonU 4
+#define buttonD 3
 
 #define ARRAY_LENGTH 20 //Change this value to modulate the smoothing (can only work for all with smoothing)
 #define OLED_MOSI   9
@@ -18,7 +18,7 @@
 #define OLED_RESET 13
 Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
-#define countdown 60
+#define countdown 25
 int tHours = 96;
 int tTemp  = 86;
 byte seconds  = 0;                 //used in timeCounter() and runningOLED()
@@ -73,6 +73,10 @@ void loop() {
       endHeating();
     }
     if(digitalRead(buttonR) == LOW){
+      while(digitalRead(buttonR) == LOW){
+        delay(200); //debounce time
+        //wait to unpress
+      }
       menu();
     }
 
@@ -214,6 +218,7 @@ void timeCounter(int tHours){
 
 
 void setUpTemp(){
+  bool singlepress;
   while(1){
 //onscreen things
   //temperature line
@@ -235,24 +240,32 @@ void setUpTemp(){
     display.display();
     display.clearDisplay();
 //wait for buttons
-    while(digitalRead(buttonU) == HIGH || digitalRead(buttonD) == HIGH || digitalRead(buttonR) == HIGH ){
+    while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
+      singlepress = true;
       //do nothing...
     }
 //button responses
-    if(digitalRead(buttonU) == LOW){
+    if((digitalRead(buttonU) == LOW) && (singlepress)){
       tTemp = tTemp +1;   // Raise temp with UP button
+      singlepress = false;
     }
-    if(digitalRead(buttonD) == LOW){
+    if((digitalRead(buttonD) == LOW) && (singlepress)){
       tTemp = tTemp -1;   // Lower temp with DOWN button
+      singlepress = false;
     }
     if(digitalRead(buttonR) == LOW){
+      while(digitalRead(buttonR) == LOW){
+        delay(750); //debounce time
+        //wait to unpress
+      }
       return;             // Exit temp set-up with Right button
     }
   }
 }
 
 void setUpTime(){
-    while(1){
+  bool singlepress;
+  while(1){
 //onscreen things
   //temperature line
     display.setTextSize(2);           //'size 2' font is 16 pixels high
@@ -273,50 +286,63 @@ void setUpTime(){
     display.display();
     display.clearDisplay();
 //wait for buttons
-    while(digitalRead(buttonU) == HIGH || digitalRead(buttonD) == HIGH || digitalRead(buttonR) == HIGH ){
+    while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
+      singlepress = true;
       //do nothing...
     }
 //button responses
-    if(digitalRead(buttonU) == LOW){
+    if((digitalRead(buttonU) == LOW) && (singlepress)){
       tHours = tHours +1;   // Raise temp with UP button
+      singlepress = false;
     }
-    if(digitalRead(buttonD) == LOW){
-      tTemp = tHours -1;   // Lower temp with DOWN button
+    if((digitalRead(buttonD) == LOW) && (singlepress)){
+      tHours = tHours -1;   // Lower temp with DOWN button
+      singlepress = false;
     }
     if(digitalRead(buttonR) == LOW){
+      while(digitalRead(buttonR) == LOW){
+        delay(750); //debounce time
+        //wait to unpress
+      }
       return;             // Exit temp set-up with Right button
     }
   }
 }
 
 void menu(){
-      while(1){
+  bool singlepress;
+  while(1){
 //onscreen things
     display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
     display.setTextSize(1);          //'size 1' font is 8 pixels high
-    display.setCursor(25,0);         //can place text >> setCursor is top left of first char
-    display.print("Adjust temperature");
-    display.setCursor(25,24);         //can place text >> setCursor is top left of first char
-    display.print("Adjust remaining time");
+    display.setCursor(50,0);         //can place text >> setCursor is top left of first char
+    display.print("Adjust temp");
+    display.setCursor(50,24);         //can place text >> setCursor is top left of first char
+    display.print("Adjust time");
   //end Elapsed timer line
     display.display();
     display.clearDisplay();
 //wait for buttons
-    while(digitalRead(buttonU) == HIGH || digitalRead(buttonD) == HIGH || digitalRead(buttonR) == HIGH ){
+    while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
+      singlepress = true;
       //do nothing...
     }
 //button responses
-    if(digitalRead(buttonU) == LOW){
+    if(digitalRead(buttonU) == LOW && singlepress){
       previousMillis2 = millis();
       adjustTemp();   // Raise temp with UP button
       return;
     }
-    if(digitalRead(buttonD) == LOW){
+    if(digitalRead(buttonD) == LOW && singlepress){
       previousMillis2 = millis();
       adjustTime();   // Lower temp with DOWN button
       return;
     }
     if(digitalRead(buttonR) == LOW){
+      while(digitalRead(buttonR) == LOW){
+        delay(750); //debounce time
+        //wait to unpress
+      }
       return;             // Exit temp set-up with Right button
     }
   }
@@ -324,79 +350,94 @@ void menu(){
 
 
 void adjustTemp(){
-    while(1){
-//countdown timer
+  bool singlepress;
+  while(1){
+  //wait for buttons
+    while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
+      singlepress = true;
+      //countdown timer
   //calculate remaining time
-    int remaining = (countdown*1000 - 
-    (millis()-previousMillis2))/1000;
-//onscreen things
-  //temperature line
-    display.setTextSize(2);           //'size 2' font is 16 pixels high
-    display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
-    display.setCursor(25,12);
-    display.print(tTemp);
-    display.println("F");
-  //end temperature line
-  //remaining time line
-    display.setTextSize(1);          //'size 1' font is 8 pixels high
-    display.setCursor(0,0);         //can place text >> setCursor is top left of first char
-    display.print("Set Temp:");
-    display.setCursor(112,0);         //can place text >> setCursor is top left of first char
-    display.print("UP");
-    display.setCursor(100,24);         //can place text >> setCursor is top left of first char
-    display.print("DOWN");
-    display.setCursor(24,0);         //can place text >> setCursor is top left of first char
-    display.print(remaining);
-    display.print("s...");    
-  //end Elapsed timer line
-    display.display();
-    display.clearDisplay();
-//wait for buttons
-    while(digitalRead(buttonU) == HIGH || digitalRead(buttonD) == HIGH || digitalRead(buttonR) == HIGH ){
-      //do nothing...
+    int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
+    if(remaining < 0){
+        return;
+      }
+  //onscreen things
+    //temperature line
+      display.setTextSize(2);           //'size 2' font is 16 pixels high
+      display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
+      display.setCursor(25,12);
+      display.print(tTemp);
+      display.println("F");
+    //end temperature line
+    //remaining time line
+      display.setTextSize(1);          //'size 1' font is 8 pixels high
+      display.setCursor(0,0);         //can place text >> setCursor is top left of first char
+      display.print("Set Temp:");
+      display.setCursor(112,0);         //can place text >> setCursor is top left of first char
+      display.print("UP");
+      display.setCursor(100,24);         //can place text >> setCursor is top left of first char
+      display.print("DOWN");
+      display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+      display.print(remaining);
+      display.print("s...");    
+    //end Elapsed timer line
+      display.display();
+      display.clearDisplay();
     }
 //button responses
-    if(digitalRead(buttonU) == LOW){
+    if((digitalRead(buttonU) == LOW) && (singlepress)){
       tTemp = tTemp +1;   // Raise temp with UP button
+      singlepress = false;
     }
-    if(digitalRead(buttonD) == LOW){
+    if((digitalRead(buttonD) == LOW) && (singlepress)){
       tTemp = tTemp -1;   // Lower temp with DOWN button
+      singlepress = false;
     }
-    if(digitalRead(buttonR) == LOW){
+    if((digitalRead(buttonR) == LOW) && (singlepress)){  
+      while(digitalRead(buttonR) == LOW){
+        delay(750); //debounce time
+        //wait to unpress
+      }
       return;             // Exit temp set-up with Right button
     }
   }
 }
 
 void adjustTime(){
-      while(1){
-//countdown timer
-  //calculate remaining time
-    int remaining = (15*1000 - 
-    (millis()-previousMillis2))/1000;
-//onscreen things
-  //temperature line
-    display.setTextSize(2);           //'size 2' font is 16 pixels high
-    display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
-    display.setCursor(25,8);
-    display.print(tHours);
-    display.println("hrs");
-  //end temperature line
-  //remaining time line
-    display.setTextSize(1);          //'size 1' font is 8 pixels high
-    display.setCursor(0,0);         //can place text >> setCursor is top left of first char
-    display.print("Not implimented yet");
-    display.setCursor(0,24);         //can place text >> setCursor is top left of first char
-    display.print(remaining);
-    display.print("s...");    
-  //end Elapsed timer line
-    display.display();
-    display.clearDisplay();
+  bool singlepress;
+  while(1){
 //wait for buttons
-    while(digitalRead(buttonU) == HIGH || digitalRead(buttonD) == HIGH || digitalRead(buttonR) == HIGH ){
-      //do nothing...
+    while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
+  //countdown timer
+  //calculate remaining time
+    int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
+    if(remaining < 0){
+        return;
+      }
+  //onscreen things
+    //temperature line
+      display.setTextSize(2);           //'size 2' font is 16 pixels high
+      display.setTextColor(WHITE);      //can place text >> setCursor is top left of first char
+      display.setCursor(25,8);
+      display.print(tHours);
+      display.println("hrs");
+    //end temperature line
+    //remaining time line
+      display.setTextSize(1);          //'size 1' font is 8 pixels high
+      display.setCursor(0,0);         //can place text >> setCursor is top left of first char
+      display.print("Not implimented yet");
+      display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+      display.print(remaining);
+      display.print("s...");    
+    //end Elapsed timer line
+      display.display();
+      display.clearDisplay();
     }
-    if(digitalRead(buttonU) == LOW){
+    if(digitalRead(buttonR) == LOW){
+      while(digitalRead(buttonR) == LOW){
+        delay(750); //debounce time
+        //wait to unpress
+      }
       return;             // Exit temp set-up with Right button
     }
   }
