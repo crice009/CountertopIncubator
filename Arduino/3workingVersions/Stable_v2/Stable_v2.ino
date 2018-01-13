@@ -19,16 +19,18 @@
 Adafruit_SSD1306 display(OLED_MOSI, OLED_CLK, OLED_DC, OLED_RESET, OLED_CS);
 
 #define countdown 25
-int tHours = 72;
+int tHours = 96;
 int tTemp  = 86;
 byte seconds  = 0;                 //used in timeCounter() and runningOLED()
 byte minutes  = 0;                 //used in timeCounter() and runningOLED()
 byte hours    = 0;                 //used in timeCounter() and runningOLED()
 byte days     = 0;                 //used in timeCounter() and runningOLED()
-int Rdays    = tHours / 24;       //used in timeCounter() and runningOLED()
-int Rhours   = tHours % 24;       //used in timeCounter() and runningOLED()
-int Rminutes = Rhours % 60;       //used in timeCounter() and runningOLED()
-int Rseconds = Rminutes % 60;     //used in timeCounter() and runningOLED()
+byte Rdays    = tHours / 24;       //used in timeCounter() and runningOLED()
+byte Rhours   = tHours % 24;       //used in timeCounter() and runningOLED()
+byte Rminutes = Rhours % 60;       //used in timeCounter() and runningOLED()
+byte Rseconds = Rminutes % 60;     //used in timeCounter() and runningOLED()
+
+unsigned long startTime = 0; //used as a master timer, and to protect from millis() rollover
 
 void setup() {
   pinMode(TEMP_SENSOR_BED, INPUT);
@@ -67,7 +69,7 @@ void loop() {
     timeCounter();
     runningOLED(round(ftemp));
     //delay(10);    //delay for arduino stability, appears to not be needed...
-    if((millis()/3600000)<tHours){
+    if(((millis() - startTime)/3600000)<tHours){
       bangBang(tTemp, ftemp); 
     }else{
       endHeating();
@@ -148,89 +150,13 @@ const short BEDTEMPTABLE[][2] PROGMEM = {
 {       1008*OVERSAMPLENR       ,       0       } //safety
 };
 
-//========================================================================
-unsigned long previousMillis = 0; //used in timeCounter() and 
-unsigned long previousMillis2 = 0; //used in adjTemp() and adjTime()
+//==============================================================================
+//============================ Functions =======================================
+//==============================================================================
+
+unsigned long previousMillis = 0; //used in adjTemp() and adjTime()
 #define PGM_RD_W(x)   (short)pgm_read_word(&x) //used in analog2temp()
 
-float analog2temp(float raw) {
-    float celsius = 0;
-    byte i;
-    for (i=1; i<61; i++){
-      if (PGM_RD_W(BEDTEMPTABLE[i][0]) > raw){                                              //  A linear (Y=mX+b)interpolation from the table's points:::
-        celsius  = PGM_RD_W(BEDTEMPTABLE[i-1][1]) +                                         //  Y=b+
-          (raw - PGM_RD_W(BEDTEMPTABLE[i-1][0])) *                                          //  X
-          (float)(PGM_RD_W(BEDTEMPTABLE[i][1]) - PGM_RD_W(BEDTEMPTABLE[i-1][1])) /          //  m
-          (float)(PGM_RD_W(BEDTEMPTABLE[i][0]) - PGM_RD_W(BEDTEMPTABLE[i-1][0]));
-        break;
-      }
-    }
-    // Overflow: Set to last value in the table
-    if (i == 61){
-      celsius = PGM_RD_W(BEDTEMPTABLE[i-1][1]);
-    }
-    return celsius;
-}
-
-float dataArray[ARRAY_LENGTH] = {};
-short currentDataIndex = 0;
-float smoothing (float raw){    //log the analog input value into an array, and output the average of the array
-  currentDataIndex = ++currentDataIndex % ARRAY_LENGTH;    
-  dataArray[currentDataIndex] = raw;
-
-  double arrayTotal = 0;
-  for(int i = 0; i<ARRAY_LENGTH; i++){
-    arrayTotal = arrayTotal + dataArray[i];
-  }
-  
-  double smoothCriminal = arrayTotal / ARRAY_LENGTH;
-  
-  return smoothCriminal;
-}
-
-void endHeating(){
-  digitalWrite(HEATER_BED_PIN,LOW);
-}
-
-void bangBang(int tTemp, float ftemp){
-  if(tTemp > ftemp){
-    digitalWrite(HEATER_BED_PIN,HIGH);  
-  }else{
-    digitalWrite(HEATER_BED_PIN,LOW);
-  }
-}
-
-
-void timeCounter(){
-  unsigned long currentMillis = millis();
-  if ( (currentMillis - previousMillis) >= 1000){
-    previousMillis = previousMillis + 1000;
-    seconds = seconds +1;
-    if (seconds == 60){
-      seconds = 0;
-      minutes = minutes +1;
-      if(minutes == 60){
-        minutes = 0;
-        hours = hours +1;
-        if (hours == 24){
-          days = days +1;
-        } // end hrs check
-      } // end minutes check
-    } // end seconds check
-  } // end time check
-//  if ((tHours/24)>=1){                                //double check these...
-//    Rdays = (tHours/24) - (days+1);
-//  }else{
-//    Rdays = (tHours/24) - (days);
-//  }                               
-//  Rhours = tHours - (hours + 24*(Rdays + days)+ 1);
-//  Rminutes = 60 - (minutes+1);  //+ (60*tHours) - (minutes + 60*(Rhours + hours + 24*(Rdays + days)));
-//  Rseconds = 60 - seconds;  //+ (3600*tHours) - (seconds + 60*(Rminutes + minutes + 60*(Rhours + hours + 24*(Rdays + days))));
-}
-
-//==============================================================================
-//============================  GUI Functions ==================================
-//==============================================================================
 void runningOLED(int temp){           //display is 128x32 pixels and the cursor can be set...
   //temperature line
     display.setTextSize(2);           //'size 2' font is 16 pixels high
@@ -241,21 +167,21 @@ void runningOLED(int temp){           //display is 128x32 pixels and the cursor 
     display.println("F");
   //end temperature line
   //remaining time line
-//    display.setTextSize(1);          //'size 1' font is 8 pixels high
-//    display.setCursor(0,16);         //can place text >> setCursor is top left of first char
-//    display.print("to Go: ");
-//    display.print(Rdays);
-//    display.print("d ");
-//    display.print(Rhours);
-//    display.print("h ");
-//    display.print(Rminutes);
-//    display.print("m ");
-//    display.print(Rseconds);
-//    display.print("s");
+    display.setTextSize(1);          //'size 1' font is 8 pixels high
+    display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+    display.print("Left: ");
+    display.print(Rdays);
+    display.print("d ");
+    display.print(Rhours);
+    display.print("h ");
+    display.print(Rminutes);
+    display.print("m ");
+    display.print(Rseconds);
+    display.print("s");
   //end remaining time lines
   //Elapsed timer line
     display.setTextSize(1);          //'size 1' font is 8 pixels high
-    display.setCursor(0,24);         //can place text >> setCursor is top left of first char 
+    display.setCursor(0,16);         //can place text >> setCursor is top left of first char 
     display.print("Done: ");
     display.print(days);
     display.print("d ");
@@ -268,6 +194,22 @@ void runningOLED(int temp){           //display is 128x32 pixels and the cursor 
   //end Elapsed timer line
     display.display();
     display.clearDisplay();
+}
+
+void timeCounter(){     //this is only for the onscreen timers, while running. will work fine without this. 
+  unsigned long elapsed = (millis() - startTime);
+  // all of the elapsed time, turned into DD:HH:MM:SS
+  days     = elapsed / 1000 / (3600 * 24);
+  hours    = elapsed / 1000 / 3600;
+  minutes  = elapsed / 1000 % 3600 / 60;
+  seconds  = elapsed / 1000 % 3600 % 60 % 60;
+  // all of the remaining time, turned into DD:HH:MM:SS  
+  
+  //this timer still sucks....
+  Rdays    = ((tHours*3600) - (elapsed/1000)) / 3600;
+  Rhours   = ((tHours*3600) - (elapsed/1000)) / 3600 % 24;
+  Rminutes = 60-(minutes+1); //the cheater's way to do this...
+  Rseconds = 60-(seconds); //the cheater's way to do this...   
 }
 
 void setUpTemp(){
@@ -354,11 +296,11 @@ void setUpTime(){
     }
     if(digitalRead(buttonR) == LOW){
       while(digitalRead(buttonR) == LOW){
-        delay(750); //debounce time
+        delay(1500); //debounce time
+        startTime = 0;
         //wait to unpress
       }
       if(48 < (tHours/24)) tooLongTimeError(); 
-      previousMillis = 0; // Zero the clock
       return;             // Exit temp set-up with Right button
     }
   }
@@ -384,12 +326,12 @@ void menu(){
     }
 //button responses
     if(digitalRead(buttonU) == LOW && singlepress){
-      previousMillis2 = millis();
+      previousMillis = millis();
       adjustTemp();   // Raise temp with UP button
       return;
     }
     if(digitalRead(buttonD) == LOW && singlepress){
-      previousMillis2 = millis();
+      previousMillis = millis();
       adjustTime();   // Lower temp with DOWN button
       return;
     }
@@ -412,7 +354,7 @@ void adjustTemp(){
       singlepress = true;
       //countdown timer
   //calculate remaining time
-    int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
+    int remaining = (countdown*1000 - (millis()-previousMillis))/1000;
     if(remaining < 0) return;
   //onscreen things
     //temperature line
@@ -462,10 +404,9 @@ void adjustTime(){
   while(1){
 //wait for buttons
     while(digitalRead(buttonU) == HIGH && digitalRead(buttonD) == HIGH && digitalRead(buttonR) == HIGH ){
-      singlepress = true;
   //countdown timer
   //calculate remaining time
-    int remaining = (countdown*1000 - (millis()-previousMillis2))/1000;
+    int remaining = (countdown*1000 - (millis()-previousMillis))/1000;
     if(remaining < 0) return;
   //onscreen things
     //temperature line
@@ -479,9 +420,7 @@ void adjustTime(){
     //remaining time line
       display.setTextSize(1);          //'size 1' font is 8 pixels high
       display.setCursor(0,0);         //can place text >> setCursor is top left of first char
-      display.print("Adjust from: ");
-      display.print(tHours);
-      display.print("hrs");
+      display.print("Not implimented yet");
       display.setCursor(0,24);         //can place text >> setCursor is top left of first char
       display.print(remaining);
       display.print("s...");    
@@ -553,10 +492,55 @@ void done(){
       display.print("Enjoy your tempeh :)");
       display.display();
       display.clearDisplay();
-      while (1){
+      while(1){
         endHeating();
       }
 }
 
 //=============================================================================================
+float analog2temp(float raw) {
+    float celsius = 0;
+    byte i;
+    for (i=1; i<61; i++){
+      if (PGM_RD_W(BEDTEMPTABLE[i][0]) > raw){                                              //  A linear (Y=mX+b)interpolation from the table's points:::
+        celsius  = PGM_RD_W(BEDTEMPTABLE[i-1][1]) +                                         //  Y=b+
+          (raw - PGM_RD_W(BEDTEMPTABLE[i-1][0])) *                                          //  X
+          (float)(PGM_RD_W(BEDTEMPTABLE[i][1]) - PGM_RD_W(BEDTEMPTABLE[i-1][1])) /          //  m
+          (float)(PGM_RD_W(BEDTEMPTABLE[i][0]) - PGM_RD_W(BEDTEMPTABLE[i-1][0]));
+        break;
+      }
+    }
+    // Overflow: Set to last value in the table
+    if (i == 61){
+      celsius = PGM_RD_W(BEDTEMPTABLE[i-1][1]);
+    }
+    return celsius;
+}
 
+float dataArray[ARRAY_LENGTH] = {};
+short currentDataIndex = 0;
+float smoothing (float raw){    //log the analog input value into an array, and output the average of the array
+  currentDataIndex = ++currentDataIndex % ARRAY_LENGTH;    
+  dataArray[currentDataIndex] = raw;
+
+  double arrayTotal = 0;
+  for(int i = 0; i<ARRAY_LENGTH; i++){
+    arrayTotal = arrayTotal + dataArray[i];
+  }
+  
+  double smoothCriminal = arrayTotal / ARRAY_LENGTH;
+  
+  return smoothCriminal;
+}
+
+void endHeating(){
+  digitalWrite(HEATER_BED_PIN,LOW);
+}
+
+void bangBang(int tTemp, float ftemp){
+  if(tTemp > ftemp){
+    digitalWrite(HEATER_BED_PIN,HIGH);  
+  }else{
+    digitalWrite(HEATER_BED_PIN,LOW);
+  }
+}
