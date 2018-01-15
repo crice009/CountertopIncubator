@@ -166,32 +166,37 @@ void runningOLED(int temp){           //display is 128x32 pixels and the cursor 
     display.print(temp);
     display.println("F");
   //end temperature line
-  //remaining time line
-    display.setTextSize(1);          //'size 1' font is 8 pixels high
-    display.setCursor(0,24);         //can place text >> setCursor is top left of first char
-    display.print("Left: ");
-    display.print(Rdays);
-    display.print("d ");
-    display.print(Rhours);
-    display.print("h ");
-    display.print(Rminutes);
-    display.print("m ");
-    display.print(Rseconds);
-    display.print("s");
-  //end remaining time lines
-  //Elapsed timer line
+  //Elapsed time line
     display.setTextSize(1);          //'size 1' font is 8 pixels high
     display.setCursor(0,16);         //can place text >> setCursor is top left of first char 
     display.print("Done: ");
-    display.print(days);
-    display.print("d ");
+    if(tHours > 24) display.print(days);
+    if(tHours > 24) display.print("d ");
+    if((hours < 10) && (tHours > 24)) display.print("0");
     display.print(hours);
     display.print("h ");
+    if(minutes < 10) display.print("0");
     display.print(minutes);
     display.print("m ");
+    if(seconds < 10) display.print("0");
     display.print(seconds);
     display.print("s");
-  //end Elapsed timer line
+  //Remaining time line
+    display.setTextSize(1);          //'size 1' font is 8 pixels high
+    display.setCursor(0,24);         //can place text >> setCursor is top left of first char
+    display.print("Left: ");
+    if(tHours > 24) display.print(Rdays);
+    if(tHours > 24) display.print("d ");
+    if((Rhours < 10) && (tHours > 24)) display.print("0");
+    display.print(Rhours);
+    display.print("h ");
+    if(Rminutes < 10) display.print("0");
+    display.print(Rminutes);
+    display.print("m ");
+    if(Rseconds < 10) display.print("0");
+    display.print(Rseconds);
+    display.print("s");
+  //Finish Display
     display.display();
     display.clearDisplay();
 }
