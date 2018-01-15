@@ -52,7 +52,7 @@ void setup() {
   display.clearDisplay();  
 
   setUpTemp();
-  setUpTime();
+  setUpTime(); 
 }
 
 void loop() {
@@ -302,7 +302,7 @@ void setUpTime(){
     if(digitalRead(buttonR) == LOW){
       while(digitalRead(buttonR) == LOW){
         delay(1500); //debounce time
-        startTime = 0;
+        startTime = millis();
         //wait to unpress
       }
       if(48 < (tHours/24)) tooLongTimeError(); 
